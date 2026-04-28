@@ -1,0 +1,18 @@
+{
+  "3d-graph:open-3d-graph-global": [
+    {
+      "modifiers": [
+        "Shift"
+      ],
+      "key": "3"
+    }
+  ],
+  "3d-graph:open-3d-graph-local": [
+    {
+      "modifiers": [
+        "Shift"
+      ],
+      "key": "2"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+-  **[[Pretrained weights]]** (`SENTINEL2_ALL_MOCO`) — The ResNet-18 was pre-trained on Sentinel-2 imagery using self-supervised learning (MoCo), so it already understands spectral patterns before your training even starts.
+- **[[Fine-tuning]]** — Taking a pretrained model and continuing training on your specific task (EuroSAT classes). This is why the model works even with limited data — it doesn't learn from scratch.

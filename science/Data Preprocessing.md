@@ -1,0 +1,2 @@
+- **[[Normalization]]** (`Normalize(0, 10000)`) — Scales raw pixel values (0–10000) to 0–1 range so the network trains more stably.
+- **[[Data augmentation]]** (`RandomHorizontalFlip`, `RandomVerticalFlip`) — Artificially creates variety by flipping images during training, helping the model generalize.

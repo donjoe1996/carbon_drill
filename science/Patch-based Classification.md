@@ -1,0 +1,1 @@
+- The inference approach in [cell-13](vscode-webview://0dkjtk8kjpe1ble5bebhaldebhmb0sdd5hclqm1t07b2v0gsciuo/scene_classification.ipynb): a large satellite tile is divided into **64x64 pixel patches**, each classified independently, then stitched back into a full map. This is necessary because the model was trained on 64x64 patches.
