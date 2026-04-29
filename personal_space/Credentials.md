@@ -1,0 +1,24 @@
+---
+title: Credentials
+tags:
+  - Password
+created: 2026-04-29
+---
+
+
+| Type          | Account                                    | Username                                                                                                                                                                          | Platforn | Password                          | PIN      |
+| ------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------- | -------- |
+| Apple         | app store                                  | yogik.winardhana@gmail.com                                                                                                                                                        |          | Appstore123!@#                    |          |
+| bitwarden     |                                            |                                                                                                                                                                                   | website  | letmeintobitwarden123456          |          |
+| gmail         | donjoe                                     | donjoe826@gmail.com                                                                                                                                                               |          |                                   |          |
+| stock         | ipotgo                                     | IMADEYOGI1996                                                                                                                                                                     | mobile   | Letmein123!@#                     | 23112626 |
+| crypto        | pintu                                      | tasiakirana08@gmail.com                                                                                                                                                           | mobile   | Letmein123                        | 081298   |
+| bank          | brimo                                      | Imadeyogi1996                                                                                                                                                                     | mobile   | Letmein123                        | 231126   |
+| authenticator | authy                                      |                                                                                                                                                                                   |          | Authy123!@#123                    |          |
+| Apple         | appleid                                    | yogik.winardhana@gmail.com                                                                                                                                                        |          | AppleID123!@#                     |          |
+| Google        | google                                     | yogik.winardhana@gmail.com                                                                                                                                                        |          | Google123!@#                      |          |
+| Samsung       | Samsung account                            | yogik.winardhana@gmail.com                                                                                                                                                        |          | Y3WNqq#saWyk^P                    |          |
+| crypto        | indodax                                    | stored at google password manager                                                                                                                                                 | web      | stored at google password manager | 231126   |
+| bank          | brimo mamah                                | 357001016914538                                                                                                                                                                   |          | 960322                            |          |
+| zlib          |                                            | [http://loginzlib2vrak5zzpcocc3ouizykn6k5qecgj2tzlnab5wcbqhembyd.onion/?redirectUrl=%2F](http://loginzlib2vrak5zzpcocc3ouizykn6k5qecgj2tzlnab5wcbqhembyd.onion/?redirectUrl=%2F)) | web      | letmein123                        |          |
+| sekala        | [qlola.bri.co.id](http://qlola.bri.co.id/) | di google keep                                                                                                                                                                    | browser  | Letmein123!@#                     | 231126   |
