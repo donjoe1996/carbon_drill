@@ -14,7 +14,7 @@
               "type": "markdown",
               "state": {
                 "file": "AI-MOC.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -185,9 +185,9 @@
   },
   "active": "fae49dc1d94dce96",
   "lastOpenFiles": [
+    "AI-MOC.md",
     "What Foundation Models Are NOT.md",
     "Llama Family.md",
-    "AI-MOC.md",
     "Tokenization and Context Windows.md",
     "Attention Mechanism.md",
     "Dolphin-Phi — Identity and Configuration.md",
