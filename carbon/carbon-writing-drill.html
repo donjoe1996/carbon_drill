@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Writing Drill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0d1f17;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      color: #e8ede9;
+      padding: 2rem 1rem;
+    }
+    .wrap { max-width: 700px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header-icon { font-size: 2rem; margin-bottom: 0.3rem; }
+    .header h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #74b08a; margin: 0; }
+    .header p { color: #6b8f78; font-size: 0.88rem; font-family: 'Lato', sans-serif; margin-top: 0.3rem; }
+    .card { background: #13271e; border: 1px solid #2a4535; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.2rem; }
+    h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: #95b8a0; margin-bottom: 0.8rem; }
+    .btn {
+      background: #2d6a4f; color: #e8ede9; border: none; border-radius: 8px;
+      padding: 0.7rem 1.8rem; font-size: 1rem; cursor: pointer;
+      font-family: 'Lato', sans-serif; transition: background 0.2s;
+    }
+    .btn:hover { background: #40916c; }
+    .btn-ghost {
+      background: transparent; border: 1px solid #2a4535; color: #95b8a0;
+    }
+    .btn-ghost:hover { background: #1c3829; }
+    .btn-copy {
+      background: #1c3829; color: #74b08a; border: 1px solid #2d6a4f;
+      border-radius: 8px; padding: 0.5rem 1.2rem; font-size: 0.9rem;
+      cursor: pointer; font-family: 'Lato', sans-serif; transition: background 0.2s;
+    }
+    .btn-copy:hover { background: #2d6a4f; color: #e8ede9; }
+    textarea, .json-box {
+      width: 100%; background: #0d1f17; border: 1px solid #2a4535;
+      border-radius: 8px; color: #e8ede9; padding: 0.7rem 0.9rem;
+      font-family: 'Lato', sans-serif; font-size: 0.95rem;
+      outline: none; resize: vertical; line-height: 1.6;
+    }
+    textarea:focus { border-color: #40916c; }
+    .json-box {
+      font-family: 'Courier New', monospace; font-size: 0.82rem;
+      color: #95b8a0; height: 240px; overflow-y: auto; resize: vertical;
+      white-space: pre; user-select: all;
+    }
+    label { display: block; color: #95b8a0; font-family: 'Lato', sans-serif; font-size: 0.88rem; margin-bottom: 0.3rem; margin-top: 0.8rem; }
+    .word-pill {
+      display: inline-block; background: #1a3d2a; border: 1px solid #2d6a4f;
+      border-radius: 20px; padding: 0.2rem 0.8rem;
+      font-family: 'Playfair Display', serif; font-size: 1rem;
+      color: #74b08a; margin-right: 0.5rem; margin-bottom: 0.4rem;
+    }
+    .tag {
+      display: inline-block; background: #1c3829; border: 1px solid #2a4535;
+      border-radius: 4px; padding: 0.15rem 0.5rem;
+      font-size: 0.78rem; color: #74b08a; font-family: 'Lato', sans-serif;
+    }
+    .fcad-row { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .fcad-cell {
+      flex: 1; min-width: 120px; background: #0d1f17;
+      border: 1px solid #2a4535; border-radius: 8px; padding: 0.7rem;
+    }
+    .fcad-letter { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: #40916c; font-weight: 700; }
+    .fcad-label { font-family: 'Lato', sans-serif; font-size: 0.82rem; color: #74b08a; font-weight: 600; }
+    .fcad-desc { font-family: 'Lato', sans-serif; font-size: 0.78rem; color: #6b8f78; margin-top: 0.2rem; }
+    .scenario-box {
+      background: #0d1f17; border: 1px solid #2a4535; border-radius: 8px;
+      padding: 1rem; font-family: 'Lato', sans-serif; line-height: 1.7;
+      color: #c8dccf; font-size: 0.95rem;
+    }
+    .passage-box {
+      background: #0d1f17; border: 1px solid #2a4535; border-radius: 8px;
+      padding: 1.2rem 1.4rem; font-family: 'Lato', sans-serif; line-height: 1.9;
+      color: #c8dccf; font-size: 0.95rem;
+    }
+    .passage-box .s { color: #6b8f78; font-size: 0.78rem; margin-right: 0.35rem; font-family: 'Courier New', monospace; }
+    .step-list { list-style: none; }
+    .step-list li {
+      padding: 0.5rem 0; border-bottom: 1px solid #1c3829;
+      font-family: 'Lato', sans-serif; font-size: 0.95rem;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .dimtext { color: #6b8f78; font-size: 0.88rem; font-family: 'Lato', sans-serif; }
+    .error { color: #f87171; font-size: 0.9rem; font-family: 'Lato', sans-serif; margin-top: 0.5rem; }
+    .row-between { display: flex; justify-content: space-between; align-items: center; }
+    .btn-row { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+    .word-block { margin-bottom: 1.2rem; }
+    .word-header { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.4rem; }
+    .copy-row { display: flex; justify-content: flex-end; align-items: center; gap: 0.8rem; margin-top: 0.6rem; }
+    .status-msg { font-family: 'Lato', sans-serif; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; }
+    .status-msg.show { opacity: 1; }
+    .hint-box {
+      background: #1a3d2a; border: 1px solid #2d6a4f; border-radius: 8px;
+      padding: 0.9rem 1rem; margin-top: 0.8rem;
+      font-family: 'Lato', sans-serif; font-size: 0.88rem; color: #95b8a0; line-height: 1.5;
+    }
+    .hint-box strong { color: #74b08a; }
+    .hidden { display: none; }
+    /* Drill type picker */
+    .drill-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .drill-card {
+      flex: 1; min-width: 220px; background: #0d1f17; border: 1px solid #2a4535;
+      border-radius: 10px; padding: 1.2rem; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .drill-card:hover { border-color: #40916c; background: #111f16; }
+    .drill-card .drill-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+    .drill-card .drill-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: #74b08a; margin-bottom: 0.3rem; }
+    .drill-card .drill-desc { font-family: 'Lato', sans-serif; font-size: 0.82rem; color: #6b8f78; line-height: 1.4; }
+    .drill-card .drill-btn { margin-top: 0.9rem; display: inline-block; background: #2d6a4f; color: #e8ede9; border-radius: 6px; padding: 0.5rem 1.2rem; font-family: 'Lato', sans-serif; font-size: 0.88rem; }
+    /* Error type badges */
+    .badge-grammar { display: inline-block; background: #2a2a4a; border: 1px solid #4a4a8a; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #9090d0; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
+    .badge-logic { display: inline-block; background: #3a2010; border: 1px solid #8a5020; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #d09050; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="header-icon">🌿</div>
+    <h1>Carbon Writing Drill</h1>
+    <p>Daily professional writing — AUDD · ARR · GIS</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ WELCOME -->
+  <div id="stage-welcome">
+    <div class="card">
+      <h2>Choose your drill</h2>
+      <div class="drill-row">
+
+        <div class="drill-card" onclick="startVocabDrill()">
+          <div class="drill-icon">✍️</div>
+          <div class="drill-title">Vocabulary &amp; Writing</div>
+          <div class="drill-desc">Define 2 domain words from memory, then write 2 FCAD paragraphs responding to a professional scenario.</div>
+          <div class="drill-btn">Start Writing →</div>
+        </div>
+
+        <div class="drill-card" onclick="startReadingDrill()">
+          <div class="drill-icon">🔍</div>
+          <div class="drill-title">Reading &amp; Editing</div>
+          <div class="drill-desc">Read a short carbon markets passage containing planted errors. Spot the grammar mistakes and logical flaws.</div>
+          <div class="drill-btn">Start Reading →</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card" style="padding:1rem 1.5rem">
+      <div style="font-family:'Lato',sans-serif; font-size:0.85rem; color:#6b8f78; margin-bottom:0.5rem">FCAD framework reference</div>
+      <div class="fcad-row" style="margin-bottom:0">
+        <div class="fcad-cell">
+          <div class="fcad-letter">F</div>
+          <div class="fcad-label">Focus</div>
+          <div class="fcad-desc">State your core point clearly in the opening sentence.</div>
+        </div>
+        <div class="fcad-cell">
+          <div class="fcad-letter">C</div>
+          <div class="fcad-label">Context</div>
+          <div class="fcad-desc">Explain why this matters — stakes, background, relevance.</div>
+        </div>
+        <div class="fcad-cell">
+          <div class="fcad-letter">A</div>
+          <div class="fcad-label">Action</div>
+          <div class="fcad-desc">What should be done? Recommendations, steps, decisions.</div>
+        </div>
+        <div class="fcad-cell">
+          <div class="fcad-letter">D</div>
+          <div class="fcad-label">Detail</div>
+          <div class="fcad-desc">Evidence, data, or examples that support your action.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ VOCAB DRILL -->
+  <div id="stage-drill" class="hidden">
+    <div class="card">
+      <h2>① Vocabulary — Define each word</h2>
+      <p class="dimtext" style="margin-bottom:1rem">Write your own definition before looking anything up.</p>
+      <div id="word-inputs"></div>
+    </div>
+
+    <div class="card">
+      <h2>② Writing Scenario</h2>
+      <div class="scenario-box" id="scenario-text"></div>
+    </div>
+
+    <div class="card">
+      <h2>③ Your Response — 2 paragraphs using FCAD</h2>
+      <div class="fcad-row" style="margin-bottom:0.5rem">
+        <div class="fcad-cell"><span class="fcad-letter">F</span> <span class="fcad-label">Focus</span></div>
+        <div class="fcad-cell"><span class="fcad-letter">C</span> <span class="fcad-label">Context</span></div>
+        <div class="fcad-cell"><span class="fcad-letter">A</span> <span class="fcad-label">Action</span></div>
+        <div class="fcad-cell"><span class="fcad-letter">D</span> <span class="fcad-label">Detail</span></div>
+      </div>
+      <textarea id="essay" rows="8"
+        placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
+        oninput="updateWordCount()"></textarea>
+      <div class="row-between" style="margin-top:0.8rem">
+        <span class="dimtext" id="word-count">0 words</span>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="show('stage-welcome')">← Back</button>
+          <button class="btn" onclick="generateVocabOutput()">Generate JSON →</button>
+        </div>
+      </div>
+      <div class="error hidden" id="drill-error"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ READING DRILL -->
+  <div id="stage-reading" class="hidden">
+    <div class="card">
+      <h2>① Read this passage carefully</h2>
+      <p class="dimtext" style="margin-bottom:0.8rem">
+        It contains <span class="badge-grammar">grammar errors</span> and <span class="badge-logic">logical flaws</span>. Sentences are numbered for reference.
+      </p>
+      <div class="passage-box" id="passage-text"></div>
+    </div>
+
+    <div class="card">
+      <h2>② What did you find?</h2>
+
+      <label><span class="badge-grammar">Grammar errors</span> — list each one: which sentence, what is wrong, what it should be</label>
+      <textarea id="reading-grammar" rows="4"
+        placeholder="e.g. S3: 'stocks has increased' should be 'stocks have increased' — plural subject needs plural verb"></textarea>
+
+      <label style="margin-top:1.2rem"><span class="badge-logic">Logical flaws</span> — list each one: which sentence, what the flaw is, why it doesn't hold</label>
+      <textarea id="reading-logic" rows="4"
+        placeholder="e.g. S5: The conclusion that the project caused the improvement doesn't follow — other factors (policy changes, economic shifts) could explain the decline"></textarea>
+
+      <div class="row-between" style="margin-top:1rem">
+        <span class="dimtext" id="reading-hint">Be specific — quote the text and explain the error.</span>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="show('stage-welcome')">← Back</button>
+          <button class="btn" onclick="generateReadingOutput()">Generate JSON →</button>
+        </div>
+      </div>
+      <div class="error hidden" id="reading-error"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ OUTPUT -->
+  <div id="stage-output" class="hidden">
+    <div class="card">
+      <h2 id="output-heading">📋 Copy this JSON into Claude</h2>
+      <p class="dimtext" style="margin-bottom:0.8rem" id="output-desc">
+        Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will evaluate your submission using the embedded review instructions.
+      </p>
+      <div class="json-box" id="json-output"></div>
+      <div class="copy-row">
+        <span class="status-msg" id="saved-msg" style="color:#4ade80"></span>
+        <span class="status-msg" id="copied-msg" style="color:#4ade80">Copied!</span>
+        <button class="btn-copy" onclick="saveJson()">Save JSON</button>
+        <button class="btn-copy" onclick="copyJson()">Copy JSON</button>
+      </div>
+      <div style="margin-top:0.5rem; text-align:right">
+        <button class="btn-copy" onclick="pickOutputFolder()" style="font-size:0.78rem; padding:0.3rem 0.8rem; opacity:0.7">
+          📁 <span id="folder-label">Set output folder…</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="hint-box" id="output-hint"></div>
+
+    <div style="text-align:center; margin-top:1.5rem; margin-bottom:2rem">
+      <button class="btn btn-ghost" onclick="show('stage-welcome')" style="margin-right:0.8rem">← Choose drill</button>
+      <button class="btn" id="next-btn" onclick="show('stage-welcome')" style="padding:0.8rem 2rem; font-size:1.05rem">
+        Next Drill 🌿
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let _lastWordPick = [];
+let _vocabSession = null;
+let _readingSession = null;
+let _currentDrillType = "vocab"; // "vocab" | "reading"
+let _outputDirHandle = null;
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+
+function fisherYates(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const ALL_STAGES = ["stage-welcome", "stage-drill", "stage-reading", "stage-output"];
+
+function show(id) {
+  ALL_STAGES.forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
+}
+
+// ─── VOCAB DRILL ─────────────────────────────────────────────────────────────
+
+function pickTwo() {
+  const pool = WORD_POOL.filter(w => !_lastWordPick.includes(w.word));
+  const picked = fisherYates(pool.length >= 2 ? pool : WORD_POOL).slice(0, 2);
+  _lastWordPick = picked.map(w => w.word);
+  return picked;
+}
+
+function startVocabDrill() {
+  _currentDrillType = "vocab";
+  const words = pickTwo();
+  const template = SCENARIO_TEMPLATES[Math.floor(Math.random() * SCENARIO_TEMPLATES.length)];
+  const scenario = template.replace("{WORD1}", words[0].word).replace("{WORD2}", words[1].word);
+  _vocabSession = { words, scenario };
+
+  document.getElementById("word-inputs").innerHTML = words.map((w, i) => `
+    <div class="word-block">
+      <div class="word-header">
+        <span class="word-pill">${w.word}</span>
+        <span class="tag">Word ${i + 1}</span>
+      </div>
+      <label>Your definition:</label>
+      <textarea id="def-${i}" rows="2" placeholder='Define "${w.word}" in your own words…'></textarea>
+    </div>
+  `).join("");
+
+  document.getElementById("scenario-text").textContent = scenario;
+  document.getElementById("essay").value = "";
+  document.getElementById("word-count").textContent = "0 words";
+  const err = document.getElementById("drill-error");
+  err.classList.add("hidden"); err.textContent = "";
+  show("stage-drill");
+}
+
+function updateWordCount() {
+  const text = document.getElementById("essay").value.trim();
+  const count = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  document.getElementById("word-count").textContent = count + " words";
+}
+
+function generateVocabOutput() {
+  const words = _vocabSession.words;
+  const defs = words.map((_, i) => (document.getElementById(`def-${i}`)?.value || "").trim());
+  const essay = document.getElementById("essay").value.trim();
+  const errEl = document.getElementById("drill-error");
+  errEl.classList.add("hidden");
+
+  if (defs.some(d => d.length < 8)) {
+    errEl.textContent = "Please define all vocabulary words before generating output.";
+    errEl.classList.remove("hidden"); return;
+  }
+  if (essay.split(/\s+/).filter(Boolean).length < 60) {
+    errEl.textContent = "Your response needs at least ~60 words across two paragraphs.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  const output = {
+    drill_type: "vocabulary_and_writing",
+    vocabulary_definitions: words.map((w, i) => ({ word: w.word, user_definition: defs[i] })),
+    correct_definitions: words.map(w => ({ word: w.word, definition: w.definition, context: w.context })),
+    scenario: _vocabSession.scenario,
+    user_response: essay,
+    review_instructions: "You are a professional writing coach specialising in carbon markets and GIS. Evaluate the user's submission:\n1. Score vocabulary accuracy 0–10: compare each user_definition against the matching correct_definition. Partial credit for direction.\n2. Score FCAD compliance 0–10: does user_response follow Focus–Context–Action–Detail across two clear paragraphs?\n3. Quote the user's single best sentence verbatim.\n4. Give one concrete rewrite tip targeting the weakest area.\nBe strict but constructive. Present: two scores, best sentence, tip.",
+  };
+
+  showOutput(output, "vocab");
+}
+
+// ─── READING DRILL ───────────────────────────────────────────────────────────
+
+let _lastReadingPick = -1;
+
+function startReadingDrill() {
+  _currentDrillType = "reading";
+
+  let idx;
+  do { idx = Math.floor(Math.random() * READING_POOL.length); } while (idx === _lastReadingPick && READING_POOL.length > 1);
+  _lastReadingPick = idx;
+  _readingSession = READING_POOL[idx];
+
+  // Render numbered sentences
+  const html = _readingSession.sentences
+    .map((s, i) => `<span class="s">S${i + 1}</span>${s} `)
+    .join("<br/>");
+  document.getElementById("passage-text").innerHTML = html;
+
+  document.getElementById("reading-grammar").value = "";
+  document.getElementById("reading-logic").value = "";
+  const err = document.getElementById("reading-error");
+  err.classList.add("hidden"); err.textContent = "";
+  show("stage-reading");
+}
+
+function generateReadingOutput() {
+  const grammar = document.getElementById("reading-grammar").value.trim();
+  const logic = document.getElementById("reading-logic").value.trim();
+  const errEl = document.getElementById("reading-error");
+  errEl.classList.add("hidden");
+
+  if (grammar.length < 10 && logic.length < 10) {
+    errEl.textContent = "Please write your findings before generating output.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  const output = {
+    drill_type: "reading_and_editing",
+    passage_title: _readingSession.title,
+    passage: _readingSession.sentences.map((s, i) => `S${i + 1}: ${s}`).join("\n"),
+    user_grammar_findings: grammar || "(none noted)",
+    user_logic_findings: logic || "(none noted)",
+    planted_errors: _readingSession.planted_errors,
+    review_instructions: "You are a language and reasoning editor. Evaluate the user's error-spotting skills against the planted_errors list:\n1. Grammar score 0–10: did they find each grammar error? Did they correctly identify what was wrong and how to fix it?\n2. Logic score 0–10: did they identify each logical flaw? Did they explain why the reasoning fails?\n3. For any planted error they missed: name it, quote the text, and explain the error clearly.\n4. If they flagged something that is not actually an error, note it gently.\n5. End with one sentence of encouragement or a pattern to watch for.\nBe specific, quote the passage, be constructive.",
+  };
+
+  showOutput(output, "reading");
+}
+
+// ─── SHARED OUTPUT ───────────────────────────────────────────────────────────
+
+function showOutput(output, drillType) {
+  document.getElementById("json-output").textContent = JSON.stringify(output, null, 2);
+  document.getElementById("saved-msg").classList.remove("show");
+  document.getElementById("copied-msg").classList.remove("show");
+
+  if (drillType === "reading") {
+    document.getElementById("output-heading").textContent = "📋 Copy this JSON into Claude";
+    document.getElementById("output-desc").innerHTML = 'Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will score your grammar and logic spotting, reveal any errors you missed, and explain the reasoning behind each one.';
+    document.getElementById("output-hint").innerHTML = '<strong>Paste prompt for Claude:</strong><br/>Paste the JSON above and add: <em>"Please evaluate my error-spotting. Score grammar and logic spotting (0–10 each), tell me what I missed, and explain each error."</em>';
+    document.getElementById("next-btn").onclick = startReadingDrill;
+    document.getElementById("next-btn").textContent = "Next Passage 🌿";
+  } else {
+    document.getElementById("output-heading").textContent = "📋 Copy this JSON into Claude";
+    document.getElementById("output-desc").innerHTML = 'Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will score your vocabulary accuracy and FCAD structure, highlight your best sentence, and give you one concrete rewrite tip.';
+    document.getElementById("output-hint").innerHTML = '<strong>Paste prompt for Claude:</strong><br/>Paste the JSON above and add: <em>"Please evaluate my submission. Score vocabulary accuracy (0–10) and FCAD compliance (0–10), quote my best sentence, and give one concrete rewrite tip."</em>';
+    document.getElementById("next-btn").onclick = startVocabDrill;
+    document.getElementById("next-btn").textContent = "Next Drill 🌿";
+  }
+
+  show("stage-output");
+}
+
+// ─── SAVE / COPY ─────────────────────────────────────────────────────────────
+
+async function pickOutputFolder() {
+  if (!window.showDirectoryPicker) {
+    alert("Your browser doesn't support the File System Access API. Use Chrome or Edge to enable folder saving.");
+    return;
+  }
+  try {
+    _outputDirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+    document.getElementById("folder-label").textContent = _outputDirHandle.name + "/";
+  } catch (e) { /* cancelled */ }
+}
+
+async function saveJson() {
+  const text = document.getElementById("json-output").textContent;
+  const date = new Date().toISOString().slice(0, 10);
+  const prefix = _currentDrillType === "reading" ? "carbon-reading" : "carbon-vocab";
+  const filename = `${prefix}-${date}.json`;
+
+  if (_outputDirHandle) {
+    try {
+      const fileHandle = await _outputDirHandle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(text);
+      await writable.close();
+      const msg = document.getElementById("saved-msg");
+      msg.textContent = `Saved ${filename}`;
+      msg.classList.add("show");
+      setTimeout(() => { msg.classList.remove("show"); msg.textContent = ""; }, 3000);
+      return;
+    } catch (e) { /* fall through */ }
+  }
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyJson() {
+  const text = document.getElementById("json-output").textContent;
+  const flash = () => {
+    const msg = document.getElementById("copied-msg");
+    msg.classList.add("show");
+    setTimeout(() => msg.classList.remove("show"), 2000);
+  };
+  navigator.clipboard.writeText(text).then(flash).catch(() => {
+    const el = document.getElementById("json-output");
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand("copy");
+    flash();
+  });
+}
+</script>
+</body>
+</html>
