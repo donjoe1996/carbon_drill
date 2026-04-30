@@ -1,1 +1,0 @@
-- The gap between train accuracy (100%) and val accuracy (75%) in this notebook. Understanding **why** a model memorizes training data instead of learning general patterns is key to diagnosing poor results — which is exactly what went wrong here.

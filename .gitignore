@@ -1,1 +1,5 @@
-science/**/*.pdf
+# Ignore everything at the root level
+/*
+
+# Keep only the carbon folder
+!/carbon

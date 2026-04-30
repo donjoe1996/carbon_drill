@@ -1,2 +1,0 @@
-[[normalization]]
-[[one-hot encodings]]

@@ -1,3 +1,0 @@
-[[pooling]]
-[[stride]]
-[[receptive field]]
