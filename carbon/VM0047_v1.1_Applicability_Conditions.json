@@ -1,0 +1,82 @@
+[
+  {
+    "condition": "Project activities increase vegetative cover",
+    "section": "4.1(1)",
+    "page": 8,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "This is the foundational purpose of an ARR methodology — if activities don't increase vegetative cover, there is no measurable carbon removal to credit. Without this gate, non-ARR activities could claim removals under the wrong methodology.",
+    "plain_english": "You must be planting or growing more trees/vegetation than what was there before. If you're not actually increasing green cover, you have no business using this methodology."
+  },
+  {
+    "condition": "Non-overlapping area-based/census-based instances with 10m buffer",
+    "section": "4.1(2)",
+    "page": 8,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Prevents double-counting of carbon stocks where both approaches are used in a single project. The 10m buffer ensures no spatial overlap between accounting boundaries, preserving the integrity of the quantification.",
+    "plain_english": "If you're using both counting methods in one project, keep them at least 10 meters apart on the ground. You can't count the same tree twice using two different methods."
+  },
+  {
+    "condition": "Quantification approach fixed at project start for entire crediting period",
+    "section": "4.1(3)",
+    "page": 8,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Locking the approach prevents opportunistic switching between area-based and census-based methods to inflate credits. It also ensures baseline consistency — if you could switch mid-project, your baseline assumptions would become incoherent.",
+    "plain_english": "Pick your counting method on day one and stick with it for the life of the project. No switching later because the other method would give you more credits."
+  },
+  {
+    "condition": "Project start date = earliest of site preparation or land use change date",
+    "section": "4.1(4)",
+    "page": 8,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Anchors the temporal boundary to the first physical intervention. This prevents projects from cherry-picking a later start date that would exclude early emissions (e.g., from site preparation) while claiming later removals.",
+    "plain_english": "Your project clock starts ticking the moment you first touch the land — whether that's clearing weeds, plowing, or planting. You can't pretend the project started later to hide early emissions."
+  },
+  {
+    "condition": "Organic soils/wetlands require multiple project activity design (VM0047 + wetland methodology e.g., VM0036)",
+    "section": "4.1(5)",
+    "page": 8,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "VM0047 quantifies aboveground biomass well but is not designed to account for below-ground carbon dynamics in organic soils, where drainage or disturbance can release more carbon than trees sequester. Pairing with a wetland methodology ensures net removals are real, not masking soil emissions.",
+    "plain_english": "If your land is swampy or peaty, you can still do the project — but you need a second methodology to track what's happening underground. Planting trees on peatland that's releasing huge amounts of soil carbon could be a net loss, and this rule makes sure you account for that."
+  },
+  {
+    "condition": "Area-based exclusion: no 'managed forest' in prior 10 years",
+    "section": "4.4.1(1)",
+    "page": 12,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Prevents crediting regrowth on recently harvested forest land as 'new' removals. If land was managed forest within 10 years, regrowth is business-as-usual recovery, not additional reforestation. This is the perverse-incentive guard against harvest-then-replant schemes.",
+    "plain_english": "If the land had a working forest on it anytime in the last decade, you can't use the area-based approach. Trees growing back after logging isn't reforestation — it's just normal regrowth."
+  },
+  {
+    "condition": "Area-based exclusion: no clearing involving timber harvest or ecosystem degradation",
+    "section": "4.4.1(2)",
+    "page": 12,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Ensures the project itself doesn't cause the very problem it claims to solve. If pre-existing woody biomass is cleared via timber harvest or ecosystem degradation, the project would be generating emissions to later claim removals — a net-negative outcome disguised as climate action.",
+    "plain_english": "You can't cut down what's already there to sell the timber and then claim carbon credits for replanting. That's like breaking a window so you can get paid to fix it."
+  },
+  {
+    "condition": "Census-based exclusion: no removal of similar woody biomass in last 10 years",
+    "section": "4.4.2(1)",
+    "page": 12,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Parallel logic to the area-based managed-forest exclusion, adapted to census-based context. If trees serving the same function were recently removed, new planting is replacement, not additional sequestration. The 10-year window guards against strip-and-replant cycling.",
+    "plain_english": "If someone ripped out trees doing the same job in the last 10 years, you can't plant new ones and call it additional. You're just putting back what was taken away — that's replacement, not new carbon removal."
+  },
+  {
+    "condition": "Additionality (area-based): regulatory surplus + performance benchmark + investment analysis",
+    "section": "7.1",
+    "page": 16,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Three-layered test because area-based projects are landscape-scale and higher risk for non-additionality. Regulatory surplus ensures activities aren't legally required. The performance benchmark tests whether observed gains exceed matched control plots. Investment analysis confirms financial dependence on carbon revenue. Each layer catches what the others miss.",
+    "plain_english": "You must pass three tests. First, the law doesn't already require you to do this. Second, satellite data proves your land is greening faster than similar untreated land nearby. Third, you can show the project only makes financial sense because of carbon credit revenue. Fail any one, and you're out."
+  },
+  {
+    "condition": "Additionality (census-based): regulatory surplus + investment analysis + common practice",
+    "section": "7.2",
+    "page": 16,
+    "version": "VM0047 v1.1 (14 May 2025)",
+    "rationale": "Census-based projects can't use remote-sensing benchmarks effectively at low density, so common practice analysis replaces the performance benchmark. If adoption rate is below 15% among similar landowners without carbon finance, the activity is deemed non-common-practice. Investment analysis is always required per footnote 11.",
+    "plain_english": "You must also pass three tests, but different ones. The law doesn't require it. The money doesn't work without carbon credits. And fewer than 15% of similar landowners in your region are doing this without carbon payments — meaning it's not something people just do on their own."
+  }
+]

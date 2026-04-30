@@ -6,6 +6,7 @@
   <title>Carbon Writing Drill</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -106,7 +107,7 @@
     /* Drill type picker */
     .drill-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
     .drill-card {
-      flex: 1; min-width: 220px; background: #0d1f17; border: 1px solid #2a4535;
+      flex: 1; min-width: 180px; background: #0d1f17; border: 1px solid #2a4535;
       border-radius: 10px; padding: 1.2rem; cursor: pointer; transition: border-color 0.2s, background 0.2s;
     }
     .drill-card:hover { border-color: #40916c; background: #111f16; }
@@ -114,6 +115,29 @@
     .drill-card .drill-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: #74b08a; margin-bottom: 0.3rem; }
     .drill-card .drill-desc { font-family: 'Lato', sans-serif; font-size: 0.82rem; color: #6b8f78; line-height: 1.4; }
     .drill-card .drill-btn { margin-top: 0.9rem; display: inline-block; background: #2d6a4f; color: #e8ede9; border-radius: 6px; padding: 0.5rem 1.2rem; font-family: 'Lato', sans-serif; font-size: 0.88rem; }
+    /* VM47 eligibility toggle buttons */
+    .elig-btn {
+      flex: 1; padding: 0.7rem; border-radius: 8px; cursor: pointer;
+      font-family: 'Lato', sans-serif; font-size: 0.95rem; transition: all 0.2s;
+      background: transparent; border: 2px solid #2a4535; color: #6b8f78;
+    }
+    .elig-btn-yes { background: #1a3d2a; border-color: #40916c; color: #4ade80; }
+    .elig-btn-no  { background: #2a1a1a; border-color: #854040; color: #f87171; }
+    .vm47-crit { padding: 0.35rem 0; border-bottom: 1px solid #1c3829; font-family: 'Lato', sans-serif; font-size: 0.8rem; color: #c8dccf; }
+    .vm47-crit:last-child { border-bottom: none; }
+    .vm47-section { display: inline-block; background: #1a3d2a; border: 1px solid #2d6a4f; border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.7rem; color: #74b08a; font-family: 'Courier New', monospace; margin-right: 0.35rem; vertical-align: middle; }
+    .vm47-source-link { font-family: 'Lato', sans-serif; font-size: 0.78rem; color: #40916c; text-decoration: none; }
+    .vm47-source-link:hover { color: #74b08a; text-decoration: underline; }
+    /* VM47 2×2 grid layout — only when visible (not(.hidden) avoids specificity clash with .hidden{display:none}) */
+    #stage-vm47:not(.hidden) { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.55rem; }
+    .vm47-cell { margin-bottom: 0 !important; display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0.85rem 1rem; }
+    #vm47-cell-map { padding: 0; border: 1px solid #2a4535; border-radius: 12px; overflow: hidden; background: #0d1f17; }
+    #vm47-map { width: 100%; height: 100%; }
+    #vm47-criteria-list { flex: 1; overflow-y: auto; min-height: 0; padding-right: 0.2rem; scrollbar-width: thin; scrollbar-color: #2d6a4f #13271e; }
+    #vm47-criteria-list::-webkit-scrollbar { width: 5px; }
+    #vm47-criteria-list::-webkit-scrollbar-track { background: #13271e; }
+    #vm47-criteria-list::-webkit-scrollbar-thumb { background: #2d6a4f; border-radius: 3px; }
+    .leaflet-tooltip.vm47-tip { background: #13271e; border: 1px solid #2d6a4f; color: #74b08a; font-family: 'Lato', sans-serif; font-size: 0.78rem; border-radius: 4px; box-shadow: none; padding: 0.2rem 0.5rem; }
     /* Error type badges */
     .badge-grammar { display: inline-block; background: #2a2a4a; border: 1px solid #4a4a8a; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #9090d0; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
     .badge-logic { display: inline-block; background: #3a2010; border: 1px solid #8a5020; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #d09050; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
@@ -145,6 +169,13 @@
           <div class="drill-title">Reading &amp; Editing</div>
           <div class="drill-desc">Read a short carbon markets passage containing planted errors. Spot the grammar mistakes and logical flaws.</div>
           <div class="drill-btn">Start Reading →</div>
+        </div>
+
+        <div class="drill-card" onclick="startVM47Drill()">
+          <div class="drill-icon">🌱</div>
+          <div class="drill-title">VM47 Eligibility</div>
+          <div class="drill-desc">Assess a land scenario against the VM0047 ARR eligibility criteria. Determine eligibility and explain your reasoning using FCAD.</div>
+          <div class="drill-btn">Start Assessment →</div>
         </div>
 
       </div>
@@ -244,6 +275,59 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════ VM47 DRILL -->
+  <div id="stage-vm47" class="hidden">
+
+    <!-- top-left: Land Scenario -->
+    <div class="card vm47-cell" id="vm47-cell-scenario">
+      <h2 style="flex-shrink:0;margin-bottom:0.5rem;font-size:1.05rem">① Land Scenario</h2>
+      <div id="vm47-scenario" style="flex:1;overflow-y:auto;font-family:'Lato',sans-serif;font-size:0.88rem;line-height:1.7;color:#c8dccf;padding-right:0.2rem;scrollbar-width:thin;scrollbar-color:#2d6a4f #13271e"></div>
+    </div>
+
+    <!-- top-right: Satellite map -->
+    <div class="vm47-cell" id="vm47-cell-map">
+      <div id="vm47-map"></div>
+    </div>
+
+    <!-- bottom-left: Criteria -->
+    <div class="card vm47-cell" id="vm47-cell-criteria">
+      <div style="font-family:'Lato',sans-serif;font-size:0.76rem;color:#6b8f78;margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+        <span>VM0047 v1.1 APPLICABILITY CONDITIONS</span>
+        <a id="vm47-source-link" href="#" target="_blank" class="vm47-source-link">source PDF ↗</a>
+      </div>
+      <div id="vm47-criteria-list"></div>
+    </div>
+
+    <!-- bottom-right: Determination -->
+    <div class="card vm47-cell" id="vm47-cell-det">
+      <h2 style="flex-shrink:0;margin-bottom:0.35rem;font-size:1.05rem">② Your Determination</h2>
+      <label style="font-size:0.8rem">Eligible for ARR under VM0047?</label>
+      <div style="display:flex;gap:0.5rem;margin:0.35rem 0 0.55rem;flex-shrink:0">
+        <button id="elig-yes-btn" class="elig-btn" style="font-size:0.85rem;padding:0.45rem" onclick="toggleEligibility('yes')">✅ Eligible</button>
+        <button id="elig-no-btn"  class="elig-btn" style="font-size:0.85rem;padding:0.45rem" onclick="toggleEligibility('no')">❌ Not Eligible</button>
+      </div>
+      <label style="font-size:0.8rem">FCAD explanation (≥ 40 words):</label>
+      <div style="display:flex;gap:0.3rem;margin:0.3rem 0 0.35rem;flex-shrink:0">
+        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">F</span> <span class="fcad-label" style="font-size:0.72rem">Focus</span></div>
+        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">C</span> <span class="fcad-label" style="font-size:0.72rem">Context</span></div>
+        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">A</span> <span class="fcad-label" style="font-size:0.72rem">Action</span></div>
+        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">D</span> <span class="fcad-label" style="font-size:0.72rem">Detail</span></div>
+      </div>
+      <textarea id="vm47-essay" style="flex:1;min-height:0;resize:none;width:100%;background:#0d1f17;border:1px solid #2a4535;border-radius:8px;color:#e8ede9;padding:0.5rem 0.7rem;font-family:'Lato',sans-serif;font-size:0.85rem;outline:none;line-height:1.6"
+        placeholder="Focus: your determination. Context: which VM0047 condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
+        oninput="updateVM47WordCount()"></textarea>
+      <div class="row-between" style="margin-top:0.4rem;flex-shrink:0">
+        <span class="dimtext" style="font-size:0.78rem" id="vm47-word-count">0 words</span>
+        <div class="btn-row" style="gap:0.5rem">
+          <button class="btn btn-ghost" style="padding:0.4rem 0.85rem;font-size:0.83rem" onclick="show('stage-welcome')">← Back</button>
+          <button class="btn" style="padding:0.4rem 0.85rem;font-size:0.83rem" onclick="generateVM47Output()">Generate JSON →</button>
+        </div>
+      </div>
+      <div class="error hidden" id="vm47-error"></div>
+    </div>
+
+  </div>
+
   <!-- ════════════════════════════════════════════════════════ OUTPUT -->
   <div id="stage-output" class="hidden">
     <div class="card">
@@ -276,6 +360,7 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="data.js"></script>
 <script>
 
@@ -284,7 +369,12 @@
 let _lastWordPick = [];
 let _vocabSession = null;
 let _readingSession = null;
-let _currentDrillType = "vocab"; // "vocab" | "reading"
+let _vm47Session = null;
+let _lastVM47Pick = -1;
+let _vm47EligChoice = "";
+let _vm47Map = null;
+let _vm47Marker = null;
+let _currentDrillType = "vocab"; // "vocab" | "reading" | "vm47"
 let _outputDirHandle = null;
 
 // ─── UTILITIES ───────────────────────────────────────────────────────────────
@@ -298,10 +388,11 @@ function fisherYates(arr) {
   return a;
 }
 
-const ALL_STAGES = ["stage-welcome", "stage-drill", "stage-reading", "stage-output"];
+const ALL_STAGES = ["stage-welcome", "stage-drill", "stage-reading", "stage-vm47", "stage-output"];
 
 function show(id) {
   ALL_STAGES.forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
+  if (id !== "stage-vm47") document.getElementById("stage-vm47").style.height = "";
 }
 
 // ─── VOCAB DRILL ─────────────────────────────────────────────────────────────
@@ -422,6 +513,95 @@ function generateReadingOutput() {
   showOutput(output, "reading");
 }
 
+// ─── VM47 DRILL ──────────────────────────────────────────────────────────────
+
+function startVM47Drill() {
+  _currentDrillType = "vm47";
+  let idx;
+  do { idx = Math.floor(Math.random() * VM47_SCENARIOS.length); } while (idx === _lastVM47Pick && VM47_SCENARIOS.length > 1);
+  _lastVM47Pick = idx;
+  _vm47Session = VM47_SCENARIOS[idx];
+
+  document.getElementById("vm47-scenario").textContent = _vm47Session.scenario;
+  document.getElementById("vm47-source-link").href = VM47_SOURCE_URL;
+  document.getElementById("vm47-criteria-list").innerHTML = VM47_CRITERIA.map(c =>
+    `<div class="vm47-crit"><span class="vm47-section">${c.section}</span><strong style="color:#74b08a">${c.label}</strong> — ${c.description}</div>`
+  ).join("");
+
+  _vm47EligChoice = "";
+  document.getElementById("elig-yes-btn").className = "elig-btn";
+  document.getElementById("elig-no-btn").className  = "elig-btn";
+  document.getElementById("vm47-essay").value = "";
+  document.getElementById("vm47-word-count").textContent = "0 words";
+  const err = document.getElementById("vm47-error");
+  err.classList.add("hidden"); err.textContent = "";
+  window.scrollTo(0, 0);
+  show("stage-vm47");
+  requestAnimationFrame(() => {
+    const el = document.getElementById("stage-vm47");
+    el.style.height = Math.max(window.innerHeight - el.getBoundingClientRect().top - 32, 480) + "px";
+    const { lat, lng, zoom } = _vm47Session;
+    if (!_vm47Map) {
+      _vm47Map = L.map("vm47-map", { attributionControl: false, zoomControl: true });
+      L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        subdomains: ["0","1","2","3"], maxZoom: 20,
+      }).addTo(_vm47Map);
+      _vm47Marker = L.circleMarker([lat, lng], {
+        radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
+      }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
+      _vm47Map.setView([lat, lng], zoom);
+    } else {
+      _vm47Map.setView([lat, lng], zoom);
+      _vm47Marker.setLatLng([lat, lng]);
+      _vm47Marker.unbindTooltip().bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
+      _vm47Map.invalidateSize();
+    }
+  });
+}
+
+function toggleEligibility(val) {
+  _vm47EligChoice = val;
+  document.getElementById("elig-yes-btn").className = "elig-btn" + (val === "yes" ? " elig-btn-yes" : "");
+  document.getElementById("elig-no-btn").className  = "elig-btn" + (val === "no"  ? " elig-btn-no"  : "");
+}
+
+function updateVM47WordCount() {
+  const text = document.getElementById("vm47-essay").value.trim();
+  const count = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  document.getElementById("vm47-word-count").textContent = count + " words";
+}
+
+function generateVM47Output() {
+  const essay = document.getElementById("vm47-essay").value.trim();
+  const errEl = document.getElementById("vm47-error");
+  errEl.classList.add("hidden");
+
+  if (!_vm47EligChoice) {
+    errEl.textContent = "Please select whether the land is eligible or not.";
+    errEl.classList.remove("hidden"); return;
+  }
+  if (essay.split(/\s+/).filter(Boolean).length < 40) {
+    errEl.textContent = "Your explanation needs at least ~40 words.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  const output = {
+    drill_type: "vm47_eligibility",
+    scenario: _vm47Session.scenario,
+    correct_answer: {
+      eligible: _vm47Session.eligible,
+      failing_criteria: _vm47Session.failing_criteria,
+      rationale: _vm47Session.rationale,
+    },
+    criteria_reference: VM47_CRITERIA.map(c => ({ id: c.id, label: c.label })),
+    student_determination: _vm47EligChoice === "yes" ? "Eligible" : "Not Eligible",
+    student_explanation: essay,
+    review_instructions: "You are a VM0047 ARR methodology expert. Evaluate the student's eligibility determination:\n1. Eligibility score 0–10: did they identify the correct eligible/not-eligible outcome? Did they identify the key failing criteria?\n2. Reasoning score 0–10: is their FCAD explanation accurate, well-structured, and grounded in VM0047 methodology language?\n3. For any criterion they missed or misidentified: name it, quote the relevant scenario detail, and explain why it is determinative.\n4. End with one concrete tip to sharpen their VM0047 eligibility analysis.\nBe specific and cite the scenario.",
+  };
+
+  showOutput(output, "vm47");
+}
+
 // ─── SHARED OUTPUT ───────────────────────────────────────────────────────────
 
 function showOutput(output, drillType) {
@@ -435,6 +615,12 @@ function showOutput(output, drillType) {
     document.getElementById("output-hint").innerHTML = '<strong>Paste prompt for Claude:</strong><br/>Paste the JSON above and add: <em>"Please evaluate my error-spotting. Score grammar and logic spotting (0–10 each), tell me what I missed, and explain each error."</em>';
     document.getElementById("next-btn").onclick = startReadingDrill;
     document.getElementById("next-btn").textContent = "Next Passage 🌿";
+  } else if (drillType === "vm47") {
+    document.getElementById("output-heading").textContent = "📋 Copy this JSON into Claude";
+    document.getElementById("output-desc").innerHTML = 'Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will score your eligibility assessment and FCAD reasoning, reveal the correct answer, and explain any criteria you missed.';
+    document.getElementById("output-hint").innerHTML = '<strong>Paste prompt for Claude:</strong><br/>Paste the JSON above and add: <em>"Please evaluate my VM0047 eligibility assessment. Score my determination and reasoning (0–10 each), reveal the correct answer, and explain any criteria I missed."</em>';
+    document.getElementById("next-btn").onclick = startVM47Drill;
+    document.getElementById("next-btn").textContent = "Next Scenario 🌿";
   } else {
     document.getElementById("output-heading").textContent = "📋 Copy this JSON into Claude";
     document.getElementById("output-desc").innerHTML = 'Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will score your vocabulary accuracy and FCAD structure, highlight your best sentence, and give you one concrete rewrite tip.';
@@ -462,7 +648,7 @@ async function pickOutputFolder() {
 async function saveJson() {
   const text = document.getElementById("json-output").textContent;
   const date = new Date().toISOString().slice(0, 10);
-  const prefix = _currentDrillType === "reading" ? "carbon-reading" : "carbon-vocab";
+  const prefix = _currentDrillType === "reading" ? "carbon-reading" : _currentDrillType === "vm47" ? "carbon-vm47" : "carbon-vocab";
   const filename = `${prefix}-${date}.json`;
 
   if (_outputDirHandle) {

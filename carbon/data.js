@@ -243,3 +243,123 @@ const READING_POOL = [
     ],
   },
 ];
+
+
+// ─── VM0047 SOURCE ────────────────────────────────────────────────────────────
+// VM0047 v1.1, 14 May 2025
+
+const VM47_SOURCE_URL = "https://verra.org/wp-content/uploads/2025/05/VM0047-v1.1_Final.pdf";
+
+
+// ─── VM0047 APPLICABILITY CONDITIONS (from §4.1, §4.4.1, §4.4.2, §7) ────────
+
+const VM47_CRITERIA = [
+  {
+    id: "vegetative_cover_increase",
+    section: "§ 4.1(1)",
+    label: "Project activities must increase vegetative cover",
+    description: "You must be planting or growing more trees or vegetation than what was there before. If activities don't increase green cover, there is no measurable carbon removal to credit under this methodology.",
+  },
+  {
+    id: "no_method_overlap",
+    section: "§ 4.1(2)",
+    label: "Area-based and census-based instances must not overlap (10 m buffer required)",
+    description: "If both counting approaches are used in one project, they must be kept at least 10 metres apart on the ground. You cannot count the same tree twice using two different methods.",
+  },
+  {
+    id: "fixed_quantification_approach",
+    section: "§ 4.1(3)",
+    label: "Quantification approach fixed at project start for the entire crediting period",
+    description: "Pick your counting method on day one and stick with it for the life of the project. Switching later to a method that would generate more credits is not permitted.",
+  },
+  {
+    id: "start_date_earliest_activity",
+    section: "§ 4.1(4)",
+    label: "Project start date = earliest of site preparation or land-use change",
+    description: "The project clock starts at the first physical intervention — whether that is clearing weeds, ploughing, or planting. You cannot choose a later start date to exclude early emissions from the accounting.",
+  },
+  {
+    id: "organic_soil_dual_methodology",
+    section: "§ 4.1(5)",
+    label: "Organic soils / wetlands require a paired wetland methodology (e.g. VM0036)",
+    description: "If the land is peaty or swampy, a second methodology must account for below-ground soil carbon. Planting trees on draining peatland can cause net emissions — this rule forces you to account for that.",
+  },
+  {
+    id: "area_no_managed_forest_10yr",
+    section: "§ 4.4.1(1)",
+    label: "Area-based: no 'managed forest' on the land in the prior 10 years",
+    description: "If the land hosted a working managed forest within the last decade, regrowth is business-as-usual recovery, not additional reforestation. This prevents harvest-then-replant schemes from earning credits.",
+  },
+  {
+    id: "area_no_timber_harvest_clearing",
+    section: "§ 4.4.1(2)",
+    label: "Area-based: pre-project clearing must not involve timber harvest or ecosystem degradation",
+    description: "You cannot cut down existing woody biomass to sell the timber and then claim credits for replanting. That is like breaking a window so you can get paid to fix it.",
+  },
+  {
+    id: "census_no_biomass_removal_10yr",
+    section: "§ 4.4.2(1)",
+    label: "Census-based: no removal of similar woody biomass in the last 10 years",
+    description: "If trees performing the same function were removed from the land within the last decade, new planting is replacement, not additional sequestration. The 10-year window guards against strip-and-replant cycling.",
+  },
+  {
+    id: "additionality_area_based",
+    section: "§ 7.1",
+    label: "Additionality (area-based): regulatory surplus + performance benchmark + investment analysis",
+    description: "Three tests must all pass: (1) the law does not already require you to do this; (2) satellite data shows your land is greening faster than matched control plots nearby; (3) the project is only financially viable because of carbon revenue. Fail any one and you are out.",
+  },
+  {
+    id: "additionality_census_based",
+    section: "§ 7.2",
+    label: "Additionality (census-based): regulatory surplus + investment analysis + common practice (<15%)",
+    description: "Three tests: (1) the law does not require it; (2) the project does not stack up financially without carbon credits; (3) fewer than 15% of similar landowners in your region are doing this without carbon payments — meaning it is not common practice.",
+  },
+];
+
+
+// ─── VM0047 APPLICABILITY SCENARIOS (5 scenarios) ────────────────────────────
+// Each scenario tests one or more conditions drawn directly from VM0047 v1.1.
+// failing_criteria IDs correspond to VM47_CRITERIA ids above.
+
+const VM47_SCENARIOS = [
+  {
+    title: "Degraded Cattle Pasture — Ethiopian Highlands",
+    lat: 7.05, lng: 39.52, zoom: 11,
+    scenario: "A 1,200-hectare block in the Ethiopian highlands was converted from Afromontane forest to cattle grazing in 2005 and has remained in continuous agricultural use since. By the proposed project start date of March 2023, the land supports degraded pasture with sparse shrub cover and no remnant tree canopy. A soil assessment found mineral loam soils with no organic layers throughout the parcel. The registry database confirms no prior ARR project has been registered here. The developer proposes an area-based quantification approach and a financial model prepared by a development finance institution concludes that native tree planting is not economically viable without carbon revenue, as cattle operations remain only marginally profitable at this location.",
+    eligible: true,
+    failing_criteria: [],
+    rationale: "The land has been non-forested for 18 years, far exceeding the 10-year managed-forest exclusion window. It sits on mineral soils, there is no prior biomass removal in the last decade, and the area-based additionality tests (regulatory surplus, performance benchmark, investment analysis) are all met. All VM0047 v1.1 applicability conditions are satisfied.",
+  },
+  {
+    title: "Drained Peatland — Central Kalimantan",
+    lat: -2.21, lng: 113.92, zoom: 11,
+    scenario: "An 800-hectare block in Central Kalimantan, Indonesia was drained and converted to lowland rice cultivation in 2003 following canal construction by a transmigration scheme. The rice paddies were abandoned after 2012 due to canal subsidence and peat compaction, and are now covered by ferns and pioneer sedges with no tree cover. A geotechnical survey conducted in 2022 confirms tropical peat soils to a depth of 3.5 metres across the entire parcel. No prior VCS or Gold Standard project has been registered on this land. A feasibility study concludes the proposed planting would not be financially viable without carbon revenue. The developer intends to use the area-based approach under VM0047 v1.1 alone, without pairing any additional methodology.",
+    eligible: false,
+    failing_criteria: ["organic_soil_dual_methodology"],
+    rationale: "Confirmed tropical peat soils to 3.5 metres depth trigger §4.1(5): the project cannot proceed under VM0047 alone. A paired wetland methodology (such as VM0036) is required to account for below-ground soil carbon dynamics. Without it, tree planting on draining peatland could mask net emissions.",
+  },
+  {
+    title: "Recently Harvested Teak Plantation — Northern Laos",
+    lat: 20.78, lng: 102.13, zoom: 11,
+    scenario: "A 750-hectare block in northern Laos was managed as a certified commercial teak plantation from 2008 until 2016, when it was clear-felled and the timber sold at market. Since the harvest the land has been idle, now supporting sparse grass and teak stumps. The proposed project start date is 1 January 2024 — eight years after the last commercial harvest. The developer proposes the area-based quantification approach. Soil surveys confirm mineral red laterite throughout and there is no prior ARR project registration on the parcel. An investment analysis demonstrates the project is only financially viable with carbon revenue.",
+    eligible: false,
+    failing_criteria: ["area_no_managed_forest_10yr"],
+    rationale: "The land was managed commercial forest clear-felled in 2016, only 8 years before the proposed project start date. §4.4.1(1) prohibits the area-based approach where land hosted managed forest within the prior 10 years. Regrowth on recently harvested plantation land is business-as-usual recovery, not additional reforestation.",
+  },
+  {
+    title: "Logged-then-Replant Scheme — Sumatra, Indonesia",
+    lat: 0.51, lng: 101.45, zoom: 11,
+    scenario: "A developer in Sumatra contracted a logging company to harvest the standing timber from a 600-hectare block of mixed secondary forest in March 2023, generating USD 290,000 in timber revenue. Following clear-felling, the site is now bare mineral soil with logging slash. The developer now proposes an area-based ARR project to replant the cleared land with native species and register it under VM0047 v1.1. No prior ARR project is registered on this parcel. The developer's financial model shows the project is not viable without carbon revenue even after accounting for the timber proceeds, and natural regeneration is unlikely given heavy soil compaction from logging machinery.",
+    eligible: false,
+    failing_criteria: ["area_no_timber_harvest_clearing"],
+    rationale: "The pre-project clearing was carried out by commercial timber harvest, directly triggering the §4.4.1(2) exclusion for the area-based approach. Generating USD 290,000 in timber revenue from the standing forest and then claiming ARR credits for replanting is the exact scenario this condition is designed to prevent.",
+  },
+  {
+    title: "Legally Mandated Reforestation — South Island, New Zealand",
+    lat: -45.18, lng: 168.85, zoom: 10,
+    scenario: "A 3,000-hectare sheep and beef farm in the South Island of New Zealand was converted from mixed podocarp-broadleaf forest to pasture between 1965 and 1975 and has been farmed continuously since. Under New Zealand's Emissions Trading Scheme, the landowner received a binding consent order in 2022 requiring reforestation of 2,800 hectares as a condition of continued operational permits. Soils are mineral and registry searches confirm no prior international ARR project registration. The reforestation plan was designed by a government forestry agency and will proceed regardless of whether a voluntary carbon project is registered, as the consent order carries financial penalties for non-compliance. The developer plans to use the area-based quantification approach.",
+    eligible: false,
+    failing_criteria: ["additionality_area_based"],
+    rationale: "The area-based additionality test at §7.1 requires regulatory surplus — the activity must not be legally required. Here, reforestation is mandated by a binding government consent order with financial penalties for non-compliance. The activity will proceed without carbon finance, so additionality cannot be demonstrated regardless of the investment analysis outcome.",
+  },
+];
