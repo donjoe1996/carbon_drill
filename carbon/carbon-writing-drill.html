@@ -225,6 +225,56 @@
     .login-error { color: #f87171; font-family: 'DM Sans', sans-serif; font-size: 13px; margin-bottom: 0.8rem; text-align: left; }
     .login-btn { width: 100%; padding: 10px; border-radius: 6px; border: none; background: var(--green); color: #fff; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.15s; margin-top: 0.4rem; }
     .login-btn:hover { background: var(--green-lt); }
+    /* ── WRITING DRILL OVERLAY ── */
+    #stage-drill:not(.hidden) { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: #0d1f18; font-family: 'Courier New', monospace; }
+    .drill-top-bar { padding: 10px 20px; border-bottom: 1px solid #1e3a2e; display: flex; align-items: center; gap: 12px; flex-shrink: 0; position: relative; }
+    .drill-top-title { font-size: 13px; font-weight: normal; color: #6aad88; letter-spacing: 0.08em; text-transform: uppercase; }
+    .drill-main { flex: 1; display: grid; grid-template-columns: 360px 1fr; overflow: hidden; min-height: 0; }
+    .drill-left { border-right: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow: hidden; }
+    .drill-section { border-bottom: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+    .drill-section.expanded { flex: 1; flex-shrink: 1; min-height: 0; }
+    .drill-sec-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; user-select: none; background: #0a1a12; flex-shrink: 0; }
+    .drill-sec-header:hover { background: #111f18; }
+    .drill-sec-title { font-size: 12px; font-weight: bold; color: #8ac4a4; letter-spacing: 0.04em; font-family: 'Courier New', monospace; }
+    .drill-chevron { font-size: 10px; color: #3a6a52; transition: transform 0.2s; }
+    .drill-section.expanded .drill-chevron { transform: rotate(180deg); }
+    .drill-sec-body { display: none; flex-direction: column; gap: 12px; padding: 14px 16px; overflow-y: auto; flex: 1; min-height: 0; }
+    .drill-section.expanded .drill-sec-body { display: flex; }
+    .drill-panel-sub { font-size: 11px; color: #4a7a62; line-height: 1.5; flex-shrink: 0; font-family: 'Courier New', monospace; }
+    .drill-word-block { display: flex; flex-direction: column; gap: 5px; }
+    .drill-word-tag-row { display: flex; align-items: center; gap: 8px; }
+    .drill-word-tag { background: #1a3a2a; border: 1px solid #2e5a44; color: #7bbf9a; padding: 3px 9px; font-size: 11px; font-family: 'Courier New', monospace; border-radius: 2px; }
+    .drill-word-num { color: #3a6a52; font-size: 10px; font-family: 'Courier New', monospace; }
+    .drill-def-label { font-size: 10px; color: #4a7a62; font-family: 'Courier New', monospace; }
+    .drill-def-area { background: #061210; border: 1px solid #1e3a2e; color: #c8ddd5; font-family: 'Courier New', monospace; font-size: 11px; padding: 7px 9px; resize: none; line-height: 1.5; height: 70px; border-radius: 2px; outline: none; width: 100%; }
+    .drill-def-area:focus { border-color: #3a7a5a; }
+    .drill-def-area::placeholder { color: #2a5040; }
+    .drill-scenario-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.7; color: #a8ccb8; font-family: 'Courier New', monospace; }
+    .drill-scenario-box em { color: #6aad88; font-style: normal; font-weight: bold; }
+    .drill-fcad-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
+    .drill-chip { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 5px 9px; font-size: 11px; color: #6aad88; font-family: 'Courier New', monospace; display: flex; align-items: center; gap: 5px; }
+    .drill-chip-letter { font-size: 13px; font-weight: bold; color: #4a8a6a; }
+    .drill-response-area { background: #061210; border: 1px solid #1e3a2e; color: #c8ddd5; font-family: 'Courier New', monospace; font-size: 11px; padding: 9px; resize: none; line-height: 1.6; flex: 1; min-height: 0; border-radius: 2px; outline: none; width: 100%; }
+    .drill-response-area:focus { border-color: #3a7a5a; }
+    .drill-response-area::placeholder { color: #2a5040; font-size: 11px; }
+    .drill-right { display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .drill-map-area { flex: 1; background: #081510; position: relative; overflow: hidden; }
+    .drill-map-area::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(#1a3a2a22 1px, transparent 1px), linear-gradient(90deg, #1a3a2a22 1px, transparent 1px); background-size: 40px 40px; }
+    .drill-map-area::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 280px 180px at 45% 40%, #1a3a2a44 0%, transparent 70%), radial-gradient(ellipse 200px 130px at 60% 55%, #1e4a3444 0%, transparent 70%), radial-gradient(ellipse 150px 100px at 35% 60%, #162e2244 0%, transparent 70%); }
+    .drill-map-legend { position: absolute; top: 16px; right: 16px; background: #0a1a12cc; border: 1px solid #1e3a2e; border-radius: 2px; padding: 8px 12px; font-size: 10px; color: #4a7a62; z-index: 2; display: flex; flex-direction: column; gap: 5px; }
+    .drill-legend-title { font-size: 10px; color: #6aad88; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; font-family: 'Courier New', monospace; }
+    .drill-legend-row { display: flex; align-items: center; gap: 7px; font-family: 'Courier New', monospace; }
+    .drill-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .drill-map-label { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #2e5a44; letter-spacing: 0.12em; text-transform: uppercase; z-index: 2; text-align: center; white-space: nowrap; font-family: 'Courier New', monospace; }
+    .drill-map-coords { position: absolute; bottom: 16px; right: 16px; font-size: 10px; color: #2e5a44; z-index: 2; line-height: 1.6; font-family: 'Courier New', monospace; }
+    .drill-bottom-bar { border-top: 1px solid #1e3a2e; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: #0a1a12; }
+    .drill-word-count-label { font-size: 11px; color: #3a6a52; font-family: 'Courier New', monospace; }
+    .drill-btn-row { display: flex; gap: 8px; align-items: center; }
+    .drill-btn-back { background: transparent; border: 1px solid #2e5a44; color: #6aad88; padding: 5px 14px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; border-radius: 2px; }
+    .drill-btn-back:hover { background: #1a3a2a; }
+    .drill-btn-generate { background: #2a6a48; border: 1px solid #3a8a60; color: #c8ddd5; padding: 5px 16px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; border-radius: 2px; }
+    .drill-btn-generate:hover { background: #3a7a58; }
+    .drill-error-msg { font-size: 11px; color: #f87171; font-family: 'Courier New', monospace; }
     /* Error type badges */
     .badge-grammar { display: inline-block; background: #2a2a4a; border: 1px solid #4a4a8a; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #9090d0; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
     .badge-logic { display: inline-block; background: #3a2010; border: 1px solid #8a5020; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #d09050; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
@@ -325,36 +375,74 @@
 
   <!-- ═══════════════════════════════════════════════════ VOCAB DRILL -->
   <div id="stage-drill" class="hidden">
-    <div class="card">
-      <h2>① Vocabulary — Define each word</h2>
-      <p class="dimtext" style="margin-bottom:1rem">Write your own definition before looking anything up.</p>
-      <div id="word-inputs"></div>
+    <div class="drill-top-bar">
+      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
+      <span class="drill-top-title">Carbon Drill — Writing &amp; Reading</span>
     </div>
+    <div class="drill-main">
+      <div class="drill-left">
 
-    <div class="card">
-      <h2>② Writing Scenario</h2>
-      <div class="scenario-box" id="scenario-text"></div>
-    </div>
+        <div class="drill-section expanded" id="drill-sec-vocab">
+          <div class="drill-sec-header" onclick="toggleDrillSection('vocab')">
+            <span class="drill-sec-title">① Vocabulary — Define each word</span>
+            <span class="drill-chevron">▲</span>
+          </div>
+          <div class="drill-sec-body">
+            <div class="drill-panel-sub">Write your own definition before looking anything up.</div>
+            <div id="word-inputs"></div>
+          </div>
+        </div>
 
-    <div class="card">
-      <h2>③ Your Response — 2 paragraphs using FCAD</h2>
-      <div class="fcad-row" style="margin-bottom:0.5rem">
-        <div class="fcad-cell"><span class="fcad-letter">F</span> <span class="fcad-label">Focus</span></div>
-        <div class="fcad-cell"><span class="fcad-letter">C</span> <span class="fcad-label">Context</span></div>
-        <div class="fcad-cell"><span class="fcad-letter">A</span> <span class="fcad-label">Action</span></div>
-        <div class="fcad-cell"><span class="fcad-letter">D</span> <span class="fcad-label">Detail</span></div>
+        <div class="drill-section" id="drill-sec-scenario">
+          <div class="drill-sec-header" onclick="toggleDrillSection('scenario')">
+            <span class="drill-sec-title">② Writing Scenario</span>
+            <span class="drill-chevron">▼</span>
+          </div>
+          <div class="drill-sec-body">
+            <div class="drill-scenario-box" id="scenario-text"></div>
+          </div>
+        </div>
+
+        <div class="drill-section" id="drill-sec-response">
+          <div class="drill-sec-header" onclick="toggleDrillSection('response')">
+            <span class="drill-sec-title">③ Your Response — 2 paragraphs (FCAD)</span>
+            <span class="drill-chevron">▼</span>
+          </div>
+          <div class="drill-sec-body">
+            <div class="drill-fcad-chips">
+              <div class="drill-chip"><span class="drill-chip-letter">F</span> Focus</div>
+              <div class="drill-chip"><span class="drill-chip-letter">C</span> Context</div>
+              <div class="drill-chip"><span class="drill-chip-letter">A</span> Action</div>
+              <div class="drill-chip"><span class="drill-chip-letter">D</span> Detail</div>
+            </div>
+            <textarea id="essay" class="drill-response-area"
+              placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
+              oninput="updateWordCount()"></textarea>
+          </div>
+        </div>
+
       </div>
-      <textarea id="essay" rows="8"
-        placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
-        oninput="updateWordCount()"></textarea>
-      <div class="row-between" style="margin-top:0.8rem">
-        <span class="dimtext" id="word-count">0 words</span>
-        <div class="btn-row">
-          <button class="btn btn-ghost" onclick="show('stage-welcome')">← Back</button>
-          <button class="btn" onclick="generateVocabOutput()">Generate JSON →</button>
+      <div class="drill-right">
+        <div class="drill-map-area">
+          <div class="drill-map-legend">
+            <div class="drill-legend-title">Layer Key</div>
+            <div class="drill-legend-row"><span class="drill-legend-dot" style="background:#4a8a6a"></span> Project boundary</div>
+            <div class="drill-legend-row"><span class="drill-legend-dot" style="background:#3a7a5a"></span> Carbon pool</div>
+            <div class="drill-legend-row"><span class="drill-legend-dot" style="background:#2a6a4a"></span> Baseline zone</div>
+            <div class="drill-legend-row"><span class="drill-legend-dot" style="background:#1a5a3a"></span> Buffer zone</div>
+          </div>
+          <div class="drill-map-label">Spatial Reference — Drop Project Shapefile Here</div>
+          <div class="drill-map-coords">N 3.42° / E 18.75°<br/>Zoom 9 · EPSG:4326</div>
         </div>
       </div>
-      <div class="error hidden" id="drill-error"></div>
+    </div>
+    <div class="drill-bottom-bar">
+      <span class="drill-word-count-label" id="word-count">0 words</span>
+      <div class="drill-btn-row">
+        <div class="drill-error-msg hidden" id="drill-error"></div>
+        <button class="drill-btn-back" onclick="show('stage-welcome')">← Back</button>
+        <button class="drill-btn-generate" onclick="generateVocabOutput()">Generate JSON →</button>
+      </div>
     </div>
   </div>
 
@@ -652,6 +740,22 @@ function togglePanel(prefix, name) {
   });
 }
 
+function toggleDrillSection(name) {
+  ['vocab', 'scenario', 'response'].forEach(s => {
+    const el = document.getElementById(`drill-sec-${s}`);
+    if (!el) return;
+    const isTarget = s === name;
+    const isExpanded = el.classList.contains('expanded');
+    if (isTarget && !isExpanded) {
+      el.classList.add('expanded');
+      el.querySelector('.drill-chevron').textContent = '▲';
+    } else if (!isTarget) {
+      el.classList.remove('expanded');
+      el.querySelector('.drill-chevron').textContent = '▼';
+    }
+  });
+}
+
 // ─── VOCAB DRILL ─────────────────────────────────────────────────────────────
 
 function pickTwo() {
@@ -669,13 +773,13 @@ function startVocabDrill() {
   _vocabSession = { words, scenario };
 
   document.getElementById("word-inputs").innerHTML = words.map((w, i) => `
-    <div class="word-block">
-      <div class="word-header">
-        <span class="word-pill">${w.word}</span>
-        <span class="tag">Word ${i + 1}</span>
+    <div class="drill-word-block">
+      <div class="drill-word-tag-row">
+        <span class="drill-word-tag">${w.word}</span>
+        <span class="drill-word-num">word_${i + 1}</span>
       </div>
-      <label>Your definition:</label>
-      <textarea id="def-${i}" rows="2" placeholder='Define "${w.word}" in your own words…'></textarea>
+      <div class="drill-def-label">// your definition</div>
+      <textarea id="def-${i}" class="drill-def-area" placeholder='Define "${w.word}" in your own words…'></textarea>
     </div>
   `).join("");
 
@@ -684,6 +788,18 @@ function startVocabDrill() {
   document.getElementById("word-count").textContent = "0 words";
   const err = document.getElementById("drill-error");
   err.classList.add("hidden"); err.textContent = "";
+  // reset accordion: vocab open, others collapsed
+  ['vocab', 'scenario', 'response'].forEach(s => {
+    const el = document.getElementById(`drill-sec-${s}`);
+    if (!el) return;
+    if (s === 'vocab') {
+      el.classList.add('expanded');
+      el.querySelector('.drill-chevron').textContent = '▲';
+    } else {
+      el.classList.remove('expanded');
+      el.querySelector('.drill-chevron').textContent = '▼';
+    }
+  });
   show("stage-drill");
 }
 
