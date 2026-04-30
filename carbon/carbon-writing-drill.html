@@ -679,6 +679,8 @@ let _isoEligChoice = "";
 let _isoMap = null;
 let _isoMarker = null;
 let _drillMap = null;
+let _drillMarker = null;
+let _lastDrillMapPick = -1;
 let _currentDrillType = "vocab"; // "vocab" | "reading" | "vm47" | "iso"
 let _outputDirHandle = null;
 
@@ -788,6 +790,12 @@ function startVocabDrill() {
   });
   show("stage-drill");
   requestAnimationFrame(() => {
+    // Pick a VM47 scenario location that differs from the last one shown
+    let idx;
+    do { idx = Math.floor(Math.random() * VM47_SCENARIOS.length); } while (idx === _lastDrillMapPick && VM47_SCENARIOS.length > 1);
+    _lastDrillMapPick = idx;
+    const { lat, lng, zoom, title } = VM47_SCENARIOS[idx];
+
     if (!_drillMap) {
       _drillMap = L.map("drill-map", { attributionControl: false, zoomControl: true });
       const drillSat = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
@@ -801,8 +809,14 @@ function startVocabDrill() {
         { "🛰 Satellite": drillSat, "🌿 ESA Land Cover 2021": drillEsa },
         {}, { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      _drillMap.setView([3.5, 18.5], 5);
+      _drillMarker = L.circleMarker([lat, lng], {
+        radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
+      }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
+      _drillMap.setView([lat, lng], zoom);
     } else {
+      _drillMarker.setLatLng([lat, lng]);
+      _drillMarker.unbindTooltip().bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
+      _drillMap.setView([lat, lng], zoom);
       _drillMap.invalidateSize();
     }
   });
