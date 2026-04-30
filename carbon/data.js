@@ -363,3 +363,95 @@ const VM47_SCENARIOS = [
     rationale: "The area-based additionality test at §7.1 requires regulatory surplus — the activity must not be legally required. Here, reforestation is mandated by a binding government consent order with financial penalties for non-compliance. The activity will proceed without carbon finance, so additionality cannot be demonstrated regardless of the investment analysis outcome.",
   },
 ];
+
+
+// ─── ISOMETRIC REFORESTATION PROTOCOL v1.1 ───────────────────────────────────
+
+const ISO_SOURCE_URL = "https://registry.isometric.com/protocol/reforestation";
+
+const ISO_CRITERIA = [
+  {
+    id: "historically_forested",
+    section: "§4.1",
+    label: "Historically forested land",
+    description: "The land must have been a forest in the past, proven through satellite data, historical imagery, or scientific analysis. Restoring non-forest land that was never forested does not qualify.",
+  },
+  {
+    id: "not_recently_deforested",
+    section: "§4.1",
+    label: "Not recently deforested (≥10 years)",
+    description: "The land cannot have been deliberately cleared within 10 years prior to project start. Exceptions apply only for natural disasters or locally common practice. Prevents harvest-then-replant schemes from earning credits.",
+  },
+  {
+    id: "not_wetlands_peatlands",
+    section: "§4.1, §4.1.1",
+    label: "Not wetlands or peatlands",
+    description: "Cannot plant on water-logged soils, peatlands, marshes, or tidal wetlands including mangroves. Tree planting on draining peat releases soil carbon and can cause net emissions rather than sequestration.",
+  },
+  {
+    id: "no_net_warming_albedo",
+    section: "§4.1, Appendix B",
+    label: "No net warming from albedo",
+    description: "Tree cover cannot cause net warming by reducing how much sunlight the land reflects (albedo effect). Based on Hasler et al. 2024 data — high-latitude and snow-dominated regions are excluded on this basis.",
+  },
+  {
+    id: "additionality_demonstrated",
+    section: "§7.4, §9.4",
+    label: "Additionality demonstrated",
+    description: "Must prove activities would not occur without carbon finance via dynamic baselining. Must show trees would not grow naturally or through common landowner practice without carbon revenue, and that reforestation is not legally required.",
+  },
+  {
+    id: "currently_degraded",
+    section: "§4.1",
+    label: "Currently degraded or non-forested",
+    description: "Land must currently hold less biomass than a healthy reference forest OR not meet the forest definition. Must be in poor condition relative to what a mature native forest would support at this location.",
+  },
+];
+
+
+// ─── ISOMETRIC REFORESTATION SCENARIOS (5 scenarios) ─────────────────────────
+// Each scenario tests one or more conditions drawn from the Isometric v1.1 protocol.
+// failing_criteria IDs correspond to ISO_CRITERIA ids above.
+
+const ISO_SCENARIOS = [
+  {
+    title: "Degraded Cattle Pasture — Colombian Amazon",
+    lat: 1.45, lng: -75.80, zoom: 11,
+    scenario: "A 950-hectare block in the Colombian Amazon (Putumayo Department) was originally Amazonian lowland rainforest, documented in 1990 Landsat imagery and government forest inventory records. Settlers cleared it for subsistence cattle grazing between 1998 and 2003. By January 2024 (proposed project start) the land supports heavily degraded Guinea grass pasture with isolated remnant shrubs; above-ground biomass is approximately 15 tCO₂e/ha, well below the 280 tCO₂e/ha reference forest value for this zone. Soils are mineral Oxisols with no peat layers. A regional albedo assessment using Hasler et al. 2024 confirms tree cover at this tropical latitude causes net cooling. No government regulation mandates reforestation here. A project feasibility study prepared by a development finance institution concludes native forest restoration is financially unviable without carbon revenue.",
+    eligible: true,
+    failing_criteria: [],
+    rationale: "All six Isometric v1.1 eligibility conditions are met: the land was historically forested (Landsat 1990 imagery); deforestation ended 21 years before project start, well beyond the 10-year threshold; soils are mineral Oxisols with no peat or wetland characteristics; tropical latitude confirms net cooling from tree cover; additionality is demonstrated via dynamic baselining and an investment analysis showing carbon revenue is necessary; and current biomass at 15 tCO₂e/ha is far below the 280 tCO₂e/ha reference, confirming the land is degraded. The project is eligible for crediting under the Isometric Reforestation Protocol v1.1.",
+  },
+  {
+    title: "Recently Cleared Smallholder Land — Zambezia, Mozambique",
+    lat: -15.40, lng: 37.20, zoom: 11,
+    scenario: "A 600-hectare parcel in Zambezia Province, Mozambique was historically Miombo woodland, confirmed by 2004 MODIS land cover data and provincial forestry records. Between 2017 and 2019 local smallholders cleared the woodland by burning and felling to establish maize and cassava plots. By 2024 most plots were abandoned due to soil exhaustion and now support ruderal grass with sparse regenerating shrubs; current above-ground biomass is approximately 22 tCO₂e/ha against a reference of 140 tCO₂e/ha. Soils are mineral sandy loam throughout. Regional albedo analysis confirms net cooling from forest cover at this latitude. No reforestation regulation applies. A financial model prepared for the project developer shows native Miombo restoration is viable only with carbon revenue.",
+    eligible: false,
+    failing_criteria: ["not_recently_deforested"],
+    rationale: "The parcel was deliberately cleared by burning and felling between 2017 and 2019 — only 5 to 7 years before the proposed 2024 project start date. The Isometric Protocol §4.1 requires that deforestation occurred at least 10 years prior to project start (with exceptions only for natural disasters or common practice, neither of which applies here). Because recent deliberate clearing disqualifies the land, the project cannot proceed under the protocol regardless of whether other conditions are satisfied.",
+  },
+  {
+    title: "Coastal Wetland — Irrawaddy Delta, Myanmar",
+    lat: 15.85, lng: 97.60, zoom: 11,
+    scenario: "A 1,100-hectare coastal block in the Irrawaddy Delta, Myanmar sits at sea level on tidally influenced terrain. Historical aerial photographs from 1975 show mangrove forest covering the site. Between 1985 and 1995 the mangroves were cleared for shrimp aquaculture. The ponds were abandoned around 2010 and have since been colonised by pioneer sedges and sparse rehabilitating mangrove seedlings. A wetland soil survey conducted in 2023 confirms waterlogged estuarine muds with organic horizons to 1.8 metres depth throughout the parcel; salinity measurements confirm tidal influence up to 400 metres from the shoreline. An investment analysis confirms the proposed restoration would not proceed without carbon finance. No national regulation mandates restoration of this site.",
+    eligible: false,
+    failing_criteria: ["not_wetlands_peatlands"],
+    rationale: "The §4.1 / §4.1.1 wetland exclusion disqualifies this parcel. The soil survey confirms waterlogged estuarine organic muds to 1.8 metres — a tidal wetland environment. Although historically forested (mangroves), the Isometric Protocol explicitly excludes terrestrial and tidal wetlands including mangroves. Planting woody vegetation on tidally influenced organic soils risks disrupting below-ground carbon stores and can produce net emissions rather than removals. The project is ineligible under the Reforestation Protocol and would need to pursue a dedicated blue-carbon or wetland methodology instead.",
+  },
+  {
+    title: "Boreal-Tundra Transition — Finnish Lapland",
+    lat: 68.50, lng: 27.50, zoom: 10,
+    scenario: "A 2,200-hectare block in northern Finnish Lapland (above 68°N) lies in the boreal-tundra transition zone. Historical land records and 1960s aerial surveys confirm the site supported sparse Scots pine and mountain birch forest through the early 20th century, which declined due to reindeer overgrazing. By 2024 the land is open lichen heath with isolated dwarf shrubs and no tree cover; it is classed as degraded sub-arctic woodland by the Finnish Forest Centre. Soils are mineral podzols with no peat accumulation at the measurement points. No reforestation regulation applies and no carbon project is registered here. A financial model confirms tree planting is not viable without carbon revenue. An albedo assessment using Hasler et al. 2024 spatial data identifies this parcel as falling within a zone where replacing reflective lichen and snow cover with dark tree canopy produces measurable net warming over a 100-year horizon.",
+    eligible: false,
+    failing_criteria: ["no_net_warming_albedo"],
+    rationale: "Although the land is historically forested, currently degraded, on mineral soils, and not recently deforested, the Hasler et al. 2024 albedo assessment — referenced directly in Isometric v1.1 Appendix B — places this parcel in a net-warming zone. At latitudes above 68°N, replacing highly reflective lichen and seasonal snow cover with dark coniferous canopy reduces surface albedo sufficiently to cause net radiative forcing that outweighs the carbon sequestration benefit over the crediting horizon. The project therefore fails the §4.1 'no net warming from albedo' condition and is ineligible.",
+  },
+  {
+    title: "Government Mandated Afforestation — Nyungwe Buffer, Rwanda",
+    lat: -2.50, lng: 29.20, zoom: 11,
+    scenario: "A 780-hectare agricultural zone adjoining Nyungwe National Park in Rwanda was historically montane rainforest, confirmed by 1985 aerial surveys. It was cleared for tea cultivation between 1990 and 2000. By 2024 current above-ground biomass is approximately 30 tCO₂e/ha against a reference of 320 tCO₂e/ha. Soils are mineral volcanic clay loam with no organic layers. Albedo analysis confirms net cooling from forest cover at this equatorial latitude. However, in 2021 the Rwanda Development Board issued a binding reforestation directive requiring the landowner to restore native forest on this parcel within five years as a condition of the existing tea processing licence; financial penalties apply for non-compliance. An investment report confirms the land would be reforested regardless of whether a carbon project is registered.",
+    eligible: false,
+    failing_criteria: ["additionality_demonstrated"],
+    rationale: "The 2021 binding reforestation directive issued by the Rwanda Development Board removes additionality for this parcel. The Isometric Protocol §7.4 / §9.4 requires dynamic baselining to demonstrate that forest restoration would not occur without carbon finance. Here, reforestation is legally mandated with financial penalties — meaning the activity will proceed regardless of carbon revenue. The project fails the regulatory surplus component of the additionality test and is ineligible.",
+  },
+];

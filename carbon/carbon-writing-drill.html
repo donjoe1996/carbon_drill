@@ -6,6 +6,7 @@
   <title>Carbon Writing Drill</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -115,29 +116,111 @@
     .drill-card .drill-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: #74b08a; margin-bottom: 0.3rem; }
     .drill-card .drill-desc { font-family: 'Lato', sans-serif; font-size: 0.82rem; color: #6b8f78; line-height: 1.4; }
     .drill-card .drill-btn { margin-top: 0.9rem; display: inline-block; background: #2d6a4f; color: #e8ede9; border-radius: 6px; padding: 0.5rem 1.2rem; font-family: 'Lato', sans-serif; font-size: 0.88rem; }
-    /* VM47 eligibility toggle buttons */
-    .elig-btn {
-      flex: 1; padding: 0.7rem; border-radius: 8px; cursor: pointer;
-      font-family: 'Lato', sans-serif; font-size: 0.95rem; transition: all 0.2s;
-      background: transparent; border: 2px solid #2a4535; color: #6b8f78;
+    /* ── DESIGN TOKENS ── */
+    :root {
+      --bg:       #0f2318;
+      --surface:  #162d1e;
+      --panel:    #1a3323;
+      --border:   #2a4a32;
+      --border2:  #1e3d28;
+      --green:    #3d7a4a;
+      --green-lt: #4e9960;
+      --accent:   #5ab870;
+      --text:     #d4e8d8;
+      --text-dim: #7aab88;
+      --text-mut: #4a7058;
+      --badge-bg: #1e4a2a;
+      --badge-fg: #7ad890;
+      --red:      #c0483a;
     }
-    .elig-btn-yes { background: #1a3d2a; border-color: #40916c; color: #4ade80; }
-    .elig-btn-no  { background: #2a1a1a; border-color: #854040; color: #f87171; }
-    .vm47-crit { padding: 0.35rem 0; border-bottom: 1px solid #1c3829; font-family: 'Lato', sans-serif; font-size: 0.8rem; color: #c8dccf; }
-    .vm47-crit:last-child { border-bottom: none; }
-    .vm47-section { display: inline-block; background: #1a3d2a; border: 1px solid #2d6a4f; border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.7rem; color: #74b08a; font-family: 'Courier New', monospace; margin-right: 0.35rem; vertical-align: middle; }
-    .vm47-source-link { font-family: 'Lato', sans-serif; font-size: 0.78rem; color: #40916c; text-decoration: none; }
-    .vm47-source-link:hover { color: #74b08a; text-decoration: underline; }
-    /* VM47 2×2 grid layout — only when visible (not(.hidden) avoids specificity clash with .hidden{display:none}) */
-    #stage-vm47:not(.hidden) { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0.55rem; }
-    .vm47-cell { margin-bottom: 0 !important; display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0.85rem 1rem; }
-    #vm47-cell-map { padding: 0; border: 1px solid #2a4535; border-radius: 12px; overflow: hidden; background: #0d1f17; }
-    #vm47-map { width: 100%; height: 100%; }
-    #vm47-criteria-list { flex: 1; overflow-y: auto; min-height: 0; padding-right: 0.2rem; scrollbar-width: thin; scrollbar-color: #2d6a4f #13271e; }
-    #vm47-criteria-list::-webkit-scrollbar { width: 5px; }
-    #vm47-criteria-list::-webkit-scrollbar-track { background: #13271e; }
-    #vm47-criteria-list::-webkit-scrollbar-thumb { background: #2d6a4f; border-radius: 3px; }
-    .leaflet-tooltip.vm47-tip { background: #13271e; border: 1px solid #2d6a4f; color: #74b08a; font-family: 'Lato', sans-serif; font-size: 0.78rem; border-radius: 4px; box-shadow: none; padding: 0.2rem 0.5rem; }
+    /* ── ASSESSMENT OVERLAY (full-screen fixed, covers everything) ── */
+    #stage-vm47:not(.hidden),
+    #stage-iso:not(.hidden) { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: var(--bg); }
+    /* ── ASSESSMENT HEADER ── */
+    .assess-header { flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .assess-back-btn { position: absolute; left: 14px; padding: 5px 12px; border-radius: 5px; border: 1.5px solid var(--border); background: transparent; color: var(--text-dim); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; }
+    .assess-back-btn:hover { border-color: var(--green); color: var(--text); }
+    .assess-header-icon { font-size: 17px; }
+    .assess-header-title { font-size: 15px; font-weight: 600; color: var(--accent); font-family: 'DM Sans', sans-serif; }
+    .assess-header-sep { color: var(--border); }
+    .assess-header-sub { font-size: 11px; color: var(--text-dim); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+    /* ── MAIN FLEX (left col + map) ── */
+    .assess-main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+    /* ── LEFT ACCORDION COLUMN ── */
+    .left-col { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--border); overflow: hidden; }
+    .panel { display: flex; flex-direction: column; border-bottom: 1px solid var(--border); overflow: hidden; transition: flex 0.25s ease; min-height: 0; }
+    .panel.open { flex: 1; }
+    .panel.closed { flex: 0 0 auto; }
+    .panel-header { flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 11px 16px; cursor: pointer; background: var(--panel); user-select: none; border-bottom: 1px solid transparent; transition: background 0.15s; }
+    .panel.open .panel-header { border-bottom-color: var(--border); }
+    .panel-header:hover { background: #1f3d29; }
+    .panel-num { width: 22px; height: 22px; border-radius: 50%; background: var(--green); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .panel-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; font-family: 'DM Sans', sans-serif; }
+    .panel-chevron { color: var(--text-mut); font-size: 10px; transition: transform 0.25s; flex-shrink: 0; }
+    .panel.open .panel-chevron { transform: rotate(180deg); }
+    .panel-body { flex: 1; display: flex; flex-direction: column; overflow-y: auto; min-height: 0; }
+    .panel.closed .panel-body { display: none; }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    /* ── PANEL 1: SCENARIO ── */
+    .scenario-text { padding: 14px 16px; font-size: 13px; line-height: 1.75; color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; }
+    /* ── PANEL 2: CONDITIONS ── */
+    .conditions-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 8px; border-bottom: 1px solid var(--border2); }
+    .conditions-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; }
+    .source-link { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); text-decoration: none; }
+    .source-link:hover { text-decoration: underline; }
+    .condition-item { padding: 10px 16px; border-bottom: 1px solid var(--border2); display: flex; gap: 10px; align-items: flex-start; }
+    .condition-item:last-child { border-bottom: none; }
+    .cond-badge { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; background: var(--badge-bg); color: var(--badge-fg); border: 1px solid #2d6a3a; border-radius: 3px; padding: 2px 6px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .cond-text { font-size: 12px; line-height: 1.55; font-family: 'DM Sans', sans-serif; }
+    .cond-label { color: var(--accent); font-weight: 500; display: block; margin-bottom: 2px; }
+    .cond-desc { color: var(--text-dim); }
+    /* ── PANEL 3: DETERMINATION ── */
+    .det-section { padding: 12px 16px 10px; border-bottom: 1px solid var(--border2); }
+    .det-label { font-size: 10px; color: var(--text-dim); font-family: 'DM Mono', monospace; letter-spacing: 0.04em; margin-bottom: 8px; }
+    .eligibility-btns { display: flex; gap: 8px; }
+    .elig-btn { flex: 1; padding: 8px 12px; border-radius: 5px; border: 1.5px solid var(--border); background: transparent; color: var(--text-dim); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; font-weight: 500; }
+    .elig-btn:hover { border-color: var(--green); color: var(--text); }
+    .elig-btn-yes { background: rgba(90,184,112,0.12); border-color: var(--accent); color: var(--accent); }
+    .elig-btn-no  { background: rgba(192,72,58,0.12);  border-color: var(--red);    color: var(--red);    }
+    .assess-fcad-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .assess-fcad-tag { padding: 4px 10px; border-radius: 4px; border: 1.5px solid var(--border); color: var(--text-dim); font-size: 12px; font-family: 'DM Mono', monospace; }
+    .det-textarea { width: 100%; flex: 1; min-height: 0; background: #0a1a0f; border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 10px 12px; resize: none; outline: none; line-height: 1.6; transition: border-color 0.15s; }
+    .det-textarea:focus { border-color: var(--green-lt); }
+    .det-textarea::placeholder { color: var(--text-mut); font-size: 12px; }
+    .det-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 12px; }
+    .assess-word-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-mut); }
+    .footer-btns { display: flex; gap: 8px; }
+    .btn-back { padding: 7px 14px; border-radius: 5px; border: 1.5px solid var(--border); background: transparent; color: var(--text-dim); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; }
+    .btn-back:hover { border-color: var(--green); color: var(--text); }
+    .btn-generate { padding: 7px 18px; border-radius: 5px; border: none; background: var(--green); color: #fff; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.15s; }
+    .btn-generate:hover { background: var(--green-lt); }
+    .assess-error { color: #f87171; font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 4px 16px 10px; }
+    /* ── MAP COLUMN ── */
+    .map-col { flex: 1; position: relative; overflow: hidden; }
+    .map-col > div { width: 100%; height: 100%; }
+    /* ── LEAFLET OVERRIDES ── */
+    .leaflet-tooltip.vm47-tip { background: #13271e; border: 1px solid #2d6a4f; color: #74b08a; font-family: 'DM Sans', sans-serif; font-size: 12px; border-radius: 4px; box-shadow: none; padding: 2px 8px; }
+    .leaflet-control-zoom a { background: var(--panel) !important; color: var(--text) !important; border-color: var(--border) !important; }
+    .leaflet-control-zoom a:hover { background: var(--green) !important; color: #fff !important; }
+    .leaflet-control-attribution { background: rgba(15,35,24,0.8) !important; color: var(--text-dim) !important; font-size: 10px !important; }
+    .leaflet-control-attribution a { color: var(--accent) !important; }
+    /* ── LOGIN OVERLAY ── */
+    #stage-login { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+    #stage-login.hidden { display: none; }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 360px; text-align: center; }
+    .login-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .login-title { font-family: 'DM Sans', sans-serif; font-size: 1.4rem; font-weight: 600; color: var(--accent); margin-bottom: 0.3rem; }
+    .login-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; margin-bottom: 2rem; }
+    .login-field { margin-bottom: 1rem; text-align: left; }
+    .login-label { display: block; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; margin-bottom: 6px; }
+    .login-input { width: 100%; background: #0a1a0f; border: 1.5px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 13px; outline: none; transition: border-color 0.15s; resize: none; }
+    .login-input:focus { border-color: var(--green-lt); }
+    .login-input::placeholder { color: var(--text-mut); font-size: 13px; }
+    .login-error { color: #f87171; font-family: 'DM Sans', sans-serif; font-size: 13px; margin-bottom: 0.8rem; text-align: left; }
+    .login-btn { width: 100%; padding: 10px; border-radius: 6px; border: none; background: var(--green); color: #fff; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.15s; margin-top: 0.4rem; }
+    .login-btn:hover { background: var(--green-lt); }
     /* Error type badges */
     .badge-grammar { display: inline-block; background: #2a2a4a; border: 1px solid #4a4a8a; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #9090d0; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
     .badge-logic { display: inline-block; background: #3a2010; border: 1px solid #8a5020; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #d09050; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
@@ -151,8 +234,29 @@
     <p>Daily professional writing — AUDD · ARR · GIS</p>
   </div>
 
+  <!-- ══════════════════════════════════════════════════════ LOGIN -->
+  <div id="stage-login">
+    <div class="login-card">
+      <div class="login-icon">🌿</div>
+      <div class="login-title">Carbon Writing Drill</div>
+      <div class="login-sub">AUDD · ARR · GIS</div>
+      <div class="login-field">
+        <label class="login-label" for="login-username">USERNAME</label>
+        <input type="text" id="login-username" class="login-input" placeholder="Enter username" autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()" />
+      </div>
+      <div class="login-field">
+        <label class="login-label" for="login-password">PASSWORD</label>
+        <input type="password" id="login-password" class="login-input" placeholder="Enter password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div class="login-error hidden" id="login-error">Incorrect username or password.</div>
+      <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    </div>
+  </div>
+
   <!-- ═══════════════════════════════════════════════════════ WELCOME -->
-  <div id="stage-welcome">
+  <div id="stage-welcome" class="hidden">
     <div class="card">
       <h2>Choose your drill</h2>
       <div class="drill-row">
@@ -175,6 +279,13 @@
           <div class="drill-icon">🌱</div>
           <div class="drill-title">VM47 Eligibility</div>
           <div class="drill-desc">Assess a land scenario against the VM0047 ARR eligibility criteria. Determine eligibility and explain your reasoning using FCAD.</div>
+          <div class="drill-btn">Start Assessment →</div>
+        </div>
+
+        <div class="drill-card" onclick="startIsoDrill()">
+          <div class="drill-icon">🌳</div>
+          <div class="drill-title">Isometric Reforestation</div>
+          <div class="drill-desc">Assess a land scenario against the Isometric Reforestation Protocol v1.1 eligibility criteria. Determine eligibility and explain your reasoning using FCAD.</div>
           <div class="drill-btn">Start Assessment →</div>
         </div>
 
@@ -277,55 +388,166 @@
 
   <!-- ═══════════════════════════════════════════════════════ VM47 DRILL -->
   <div id="stage-vm47" class="hidden">
-
-    <!-- top-left: Land Scenario -->
-    <div class="card vm47-cell" id="vm47-cell-scenario">
-      <h2 style="flex-shrink:0;margin-bottom:0.5rem;font-size:1.05rem">① Land Scenario</h2>
-      <div id="vm47-scenario" style="flex:1;overflow-y:auto;font-family:'Lato',sans-serif;font-size:0.88rem;line-height:1.7;color:#c8dccf;padding-right:0.2rem;scrollbar-width:thin;scrollbar-color:#2d6a4f #13271e"></div>
+    <div class="assess-header">
+      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
+      <span class="assess-header-icon">🌿</span>
+      <span class="assess-header-title">VM47 Eligibility</span>
+      <span class="assess-header-sep">·</span>
+      <span class="assess-header-sub">VM0047 v1.1 ARR</span>
     </div>
+    <div class="assess-main">
+      <div class="left-col">
 
-    <!-- top-right: Satellite map -->
-    <div class="vm47-cell" id="vm47-cell-map">
-      <div id="vm47-map"></div>
-    </div>
-
-    <!-- bottom-left: Criteria -->
-    <div class="card vm47-cell" id="vm47-cell-criteria">
-      <div style="font-family:'Lato',sans-serif;font-size:0.76rem;color:#6b8f78;margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-        <span>VM0047 v1.1 APPLICABILITY CONDITIONS</span>
-        <a id="vm47-source-link" href="#" target="_blank" class="vm47-source-link">source PDF ↗</a>
-      </div>
-      <div id="vm47-criteria-list"></div>
-    </div>
-
-    <!-- bottom-right: Determination -->
-    <div class="card vm47-cell" id="vm47-cell-det">
-      <h2 style="flex-shrink:0;margin-bottom:0.35rem;font-size:1.05rem">② Your Determination</h2>
-      <label style="font-size:0.8rem">Eligible for ARR under VM0047?</label>
-      <div style="display:flex;gap:0.5rem;margin:0.35rem 0 0.55rem;flex-shrink:0">
-        <button id="elig-yes-btn" class="elig-btn" style="font-size:0.85rem;padding:0.45rem" onclick="toggleEligibility('yes')">✅ Eligible</button>
-        <button id="elig-no-btn"  class="elig-btn" style="font-size:0.85rem;padding:0.45rem" onclick="toggleEligibility('no')">❌ Not Eligible</button>
-      </div>
-      <label style="font-size:0.8rem">FCAD explanation (≥ 40 words):</label>
-      <div style="display:flex;gap:0.3rem;margin:0.3rem 0 0.35rem;flex-shrink:0">
-        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">F</span> <span class="fcad-label" style="font-size:0.72rem">Focus</span></div>
-        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">C</span> <span class="fcad-label" style="font-size:0.72rem">Context</span></div>
-        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">A</span> <span class="fcad-label" style="font-size:0.72rem">Action</span></div>
-        <div style="flex:1;background:#0d1f17;border:1px solid #2a4535;border-radius:6px;padding:0.25rem 0.4rem;text-align:center"><span class="fcad-letter" style="font-size:0.95rem">D</span> <span class="fcad-label" style="font-size:0.72rem">Detail</span></div>
-      </div>
-      <textarea id="vm47-essay" style="flex:1;min-height:0;resize:none;width:100%;background:#0d1f17;border:1px solid #2a4535;border-radius:8px;color:#e8ede9;padding:0.5rem 0.7rem;font-family:'Lato',sans-serif;font-size:0.85rem;outline:none;line-height:1.6"
-        placeholder="Focus: your determination. Context: which VM0047 condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
-        oninput="updateVM47WordCount()"></textarea>
-      <div class="row-between" style="margin-top:0.4rem;flex-shrink:0">
-        <span class="dimtext" style="font-size:0.78rem" id="vm47-word-count">0 words</span>
-        <div class="btn-row" style="gap:0.5rem">
-          <button class="btn btn-ghost" style="padding:0.4rem 0.85rem;font-size:0.83rem" onclick="show('stage-welcome')">← Back</button>
-          <button class="btn" style="padding:0.4rem 0.85rem;font-size:0.83rem" onclick="generateVM47Output()">Generate JSON →</button>
+        <div class="panel open" id="vm47-panel-scenario">
+          <div class="panel-header" onclick="togglePanel('vm47','scenario')">
+            <div class="panel-num">1</div>
+            <div class="panel-title">Land Scenario</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="scenario-text" id="vm47-scenario"></div>
+          </div>
         </div>
-      </div>
-      <div class="error hidden" id="vm47-error"></div>
-    </div>
 
+        <div class="panel closed" id="vm47-panel-criteria">
+          <div class="panel-header" onclick="togglePanel('vm47','criteria')">
+            <div class="panel-num">2</div>
+            <div class="panel-title">VM0047 Applicability Conditions</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="conditions-header">
+              <span class="conditions-title">VM0047 v1.1 CONDITIONS</span>
+              <a id="vm47-source-link" href="#" target="_blank" class="source-link">source PDF ↗</a>
+            </div>
+            <div id="vm47-criteria-list"></div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="vm47-panel-det">
+          <div class="panel-header" onclick="togglePanel('vm47','det')">
+            <div class="panel-num">3</div>
+            <div class="panel-title">Your Determination</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="det-section">
+              <div class="det-label">ELIGIBLE FOR ARR UNDER VM0047?</div>
+              <div class="eligibility-btns">
+                <button id="elig-yes-btn" class="elig-btn" onclick="toggleEligibility('yes')">✅ Eligible</button>
+                <button id="elig-no-btn"  class="elig-btn" onclick="toggleEligibility('no')">❌ Not Eligible</button>
+              </div>
+            </div>
+            <div class="det-section">
+              <div class="det-label">FCAD EXPLANATION (≥ 40 WORDS)</div>
+              <div class="assess-fcad-row">
+                <span class="assess-fcad-tag">F Focus</span>
+                <span class="assess-fcad-tag">C Context</span>
+                <span class="assess-fcad-tag">A Action</span>
+                <span class="assess-fcad-tag">D Detail</span>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
+              <textarea id="vm47-essay" class="det-textarea"
+                placeholder="Focus: your determination. Context: which VM0047 condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
+                oninput="updateVM47WordCount()"></textarea>
+            </div>
+            <div class="det-footer">
+              <span class="assess-word-count" id="vm47-word-count">0 words</span>
+              <div class="footer-btns">
+                <button class="btn-back" onclick="show('stage-welcome')">← Back</button>
+                <button class="btn-generate" onclick="generateVM47Output()">Generate JSON →</button>
+              </div>
+            </div>
+            <div class="assess-error hidden" id="vm47-error"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="map-col"><div id="vm47-map"></div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ ISOMETRIC DRILL -->
+  <div id="stage-iso" class="hidden">
+    <div class="assess-header">
+      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
+      <span class="assess-header-icon">🌳</span>
+      <span class="assess-header-title">Isometric Reforestation</span>
+      <span class="assess-header-sep">·</span>
+      <span class="assess-header-sub">Protocol v1.1</span>
+    </div>
+    <div class="assess-main">
+      <div class="left-col">
+
+        <div class="panel open" id="iso-panel-scenario">
+          <div class="panel-header" onclick="togglePanel('iso','scenario')">
+            <div class="panel-num">1</div>
+            <div class="panel-title">Land Scenario</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="scenario-text" id="iso-scenario"></div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="iso-panel-criteria">
+          <div class="panel-header" onclick="togglePanel('iso','criteria')">
+            <div class="panel-num">2</div>
+            <div class="panel-title">Isometric Eligibility Conditions</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="conditions-header">
+              <span class="conditions-title">REFORESTATION PROTOCOL v1.1 CONDITIONS</span>
+              <a id="iso-source-link" href="https://registry.isometric.com/protocol/reforestation" target="_blank" class="source-link">source ↗</a>
+            </div>
+            <div id="iso-criteria-list"></div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="iso-panel-det">
+          <div class="panel-header" onclick="togglePanel('iso','det')">
+            <div class="panel-num">3</div>
+            <div class="panel-title">Your Determination</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="det-section">
+              <div class="det-label">ELIGIBLE UNDER ISOMETRIC REFORESTATION PROTOCOL?</div>
+              <div class="eligibility-btns">
+                <button id="iso-yes-btn" class="elig-btn" onclick="toggleIsoEligibility('yes')">✅ Eligible</button>
+                <button id="iso-no-btn"  class="elig-btn" onclick="toggleIsoEligibility('no')">❌ Not Eligible</button>
+              </div>
+            </div>
+            <div class="det-section">
+              <div class="det-label">FCAD EXPLANATION (≥ 40 WORDS)</div>
+              <div class="assess-fcad-row">
+                <span class="assess-fcad-tag">F Focus</span>
+                <span class="assess-fcad-tag">C Context</span>
+                <span class="assess-fcad-tag">A Action</span>
+                <span class="assess-fcad-tag">D Detail</span>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
+              <textarea id="iso-essay" class="det-textarea"
+                placeholder="Focus: your determination. Context: which Isometric condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
+                oninput="updateIsoWordCount()"></textarea>
+            </div>
+            <div class="det-footer">
+              <span class="assess-word-count" id="iso-word-count">0 words</span>
+              <div class="footer-btns">
+                <button class="btn-back" onclick="show('stage-welcome')">← Back</button>
+                <button class="btn-generate" onclick="generateIsoOutput()">Generate JSON →</button>
+              </div>
+            </div>
+            <div class="assess-error hidden" id="iso-error"></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="map-col"><div id="iso-map"></div></div>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════ OUTPUT -->
@@ -374,8 +596,28 @@ let _lastVM47Pick = -1;
 let _vm47EligChoice = "";
 let _vm47Map = null;
 let _vm47Marker = null;
-let _currentDrillType = "vocab"; // "vocab" | "reading" | "vm47"
+let _isoSession = null;
+let _lastIsoPick = -1;
+let _isoEligChoice = "";
+let _isoMap = null;
+let _isoMarker = null;
+let _currentDrillType = "vocab"; // "vocab" | "reading" | "vm47" | "iso"
 let _outputDirHandle = null;
+
+// ─── LOGIN ───────────────────────────────────────────────────────────────────
+
+function doLogin() {
+  const user = document.getElementById("login-username").value.trim();
+  const pass = document.getElementById("login-password").value;
+  if (user === "letmein123" && pass === "letmein123") {
+    document.getElementById("stage-login").classList.add("hidden");
+    show("stage-welcome");
+  } else {
+    document.getElementById("login-error").classList.remove("hidden");
+    document.getElementById("login-password").value = "";
+    document.getElementById("login-password").focus();
+  }
+}
 
 // ─── UTILITIES ───────────────────────────────────────────────────────────────
 
@@ -388,11 +630,22 @@ function fisherYates(arr) {
   return a;
 }
 
-const ALL_STAGES = ["stage-welcome", "stage-drill", "stage-reading", "stage-vm47", "stage-output"];
+const ALL_STAGES = ["stage-welcome", "stage-drill", "stage-reading", "stage-vm47", "stage-iso", "stage-output"];
 
 function show(id) {
   ALL_STAGES.forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
-  if (id !== "stage-vm47") document.getElementById("stage-vm47").style.height = "";
+}
+
+function togglePanel(prefix, name) {
+  ['scenario', 'criteria', 'det'].forEach(p => {
+    const el = document.getElementById(`${prefix}-panel-${p}`);
+    if (!el) return;
+    if (p === name && el.classList.contains('closed')) {
+      el.classList.add('open'); el.classList.remove('closed');
+    } else if (p !== name) {
+      el.classList.remove('open'); el.classList.add('closed');
+    }
+  });
 }
 
 // ─── VOCAB DRILL ─────────────────────────────────────────────────────────────
@@ -525,7 +778,7 @@ function startVM47Drill() {
   document.getElementById("vm47-scenario").textContent = _vm47Session.scenario;
   document.getElementById("vm47-source-link").href = VM47_SOURCE_URL;
   document.getElementById("vm47-criteria-list").innerHTML = VM47_CRITERIA.map(c =>
-    `<div class="vm47-crit"><span class="vm47-section">${c.section}</span><strong style="color:#74b08a">${c.label}</strong> — ${c.description}</div>`
+    `<div class="condition-item"><span class="cond-badge">${c.section}</span><div class="cond-text"><span class="cond-label">${c.label}</span><span class="cond-desc">${c.description}</span></div></div>`
   ).join("");
 
   _vm47EligChoice = "";
@@ -535,11 +788,12 @@ function startVM47Drill() {
   document.getElementById("vm47-word-count").textContent = "0 words";
   const err = document.getElementById("vm47-error");
   err.classList.add("hidden"); err.textContent = "";
-  window.scrollTo(0, 0);
+  ['scenario', 'criteria', 'det'].forEach((p, i) => {
+    const el = document.getElementById(`vm47-panel-${p}`);
+    el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
+  });
   show("stage-vm47");
   requestAnimationFrame(() => {
-    const el = document.getElementById("stage-vm47");
-    el.style.height = Math.max(window.innerHeight - el.getBoundingClientRect().top - 32, 480) + "px";
     const { lat, lng, zoom } = _vm47Session;
     if (!_vm47Map) {
       _vm47Map = L.map("vm47-map", { attributionControl: false, zoomControl: true });
@@ -602,6 +856,95 @@ function generateVM47Output() {
   showOutput(output, "vm47");
 }
 
+// ─── ISOMETRIC DRILL ─────────────────────────────────────────────────────────
+
+function startIsoDrill() {
+  _currentDrillType = "iso";
+  let idx;
+  do { idx = Math.floor(Math.random() * ISO_SCENARIOS.length); } while (idx === _lastIsoPick && ISO_SCENARIOS.length > 1);
+  _lastIsoPick = idx;
+  _isoSession = ISO_SCENARIOS[idx];
+
+  document.getElementById("iso-scenario").textContent = _isoSession.scenario;
+  document.getElementById("iso-criteria-list").innerHTML = ISO_CRITERIA.map(c =>
+    `<div class="condition-item"><span class="cond-badge">${c.section}</span><div class="cond-text"><span class="cond-label">${c.label}</span><span class="cond-desc">${c.description}</span></div></div>`
+  ).join("");
+
+  _isoEligChoice = "";
+  document.getElementById("iso-yes-btn").className = "elig-btn";
+  document.getElementById("iso-no-btn").className  = "elig-btn";
+  document.getElementById("iso-essay").value = "";
+  document.getElementById("iso-word-count").textContent = "0 words";
+  const err = document.getElementById("iso-error");
+  err.classList.add("hidden"); err.textContent = "";
+  ['scenario', 'criteria', 'det'].forEach((p, i) => {
+    const el = document.getElementById(`iso-panel-${p}`);
+    el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
+  });
+  show("stage-iso");
+  requestAnimationFrame(() => {
+    const { lat, lng, zoom } = _isoSession;
+    if (!_isoMap) {
+      _isoMap = L.map("iso-map", { attributionControl: false, zoomControl: true });
+      L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        subdomains: ["0","1","2","3"], maxZoom: 20,
+      }).addTo(_isoMap);
+      _isoMarker = L.circleMarker([lat, lng], {
+        radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
+      }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
+      _isoMap.setView([lat, lng], zoom);
+    } else {
+      _isoMap.setView([lat, lng], zoom);
+      _isoMarker.setLatLng([lat, lng]);
+      _isoMarker.unbindTooltip().bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
+      _isoMap.invalidateSize();
+    }
+  });
+}
+
+function toggleIsoEligibility(val) {
+  _isoEligChoice = val;
+  document.getElementById("iso-yes-btn").className = "elig-btn" + (val === "yes" ? " elig-btn-yes" : "");
+  document.getElementById("iso-no-btn").className  = "elig-btn" + (val === "no"  ? " elig-btn-no"  : "");
+}
+
+function updateIsoWordCount() {
+  const text = document.getElementById("iso-essay").value.trim();
+  const count = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  document.getElementById("iso-word-count").textContent = count + " words";
+}
+
+function generateIsoOutput() {
+  const essay = document.getElementById("iso-essay").value.trim();
+  const errEl = document.getElementById("iso-error");
+  errEl.classList.add("hidden");
+
+  if (!_isoEligChoice) {
+    errEl.textContent = "Please select whether the land is eligible or not.";
+    errEl.classList.remove("hidden"); return;
+  }
+  if (essay.split(/\s+/).filter(Boolean).length < 40) {
+    errEl.textContent = "Your explanation needs at least ~40 words.";
+    errEl.classList.remove("hidden"); return;
+  }
+
+  const output = {
+    drill_type: "isometric_reforestation_eligibility",
+    scenario: _isoSession.scenario,
+    correct_answer: {
+      eligible: _isoSession.eligible,
+      failing_criteria: _isoSession.failing_criteria,
+      rationale: _isoSession.rationale,
+    },
+    criteria_reference: ISO_CRITERIA.map(c => ({ id: c.id, label: c.label })),
+    student_determination: _isoEligChoice === "yes" ? "Eligible" : "Not Eligible",
+    student_explanation: essay,
+    review_instructions: "You are an Isometric Reforestation Protocol v1.1 expert. Evaluate the student's eligibility determination:\n1. Eligibility score 0–10: did they identify the correct eligible/not-eligible outcome? Did they identify the key failing criteria?\n2. Reasoning score 0–10: is their FCAD explanation accurate, well-structured, and grounded in Isometric Protocol language?\n3. For any criterion they missed or misidentified: name it, quote the relevant scenario detail, and explain why it is determinative.\n4. End with one concrete tip to sharpen their Isometric reforestation eligibility analysis.\nBe specific and cite the scenario.",
+  };
+
+  showOutput(output, "iso");
+}
+
 // ─── SHARED OUTPUT ───────────────────────────────────────────────────────────
 
 function showOutput(output, drillType) {
@@ -621,6 +964,12 @@ function showOutput(output, drillType) {
     document.getElementById("output-hint").innerHTML = '<strong>Paste prompt for Claude:</strong><br/>Paste the JSON above and add: <em>"Please evaluate my VM0047 eligibility assessment. Score my determination and reasoning (0–10 each), reveal the correct answer, and explain any criteria I missed."</em>';
     document.getElementById("next-btn").onclick = startVM47Drill;
     document.getElementById("next-btn").textContent = "Next Scenario 🌿";
+  } else if (drillType === "iso") {
+    document.getElementById("output-heading").textContent = "📋 Copy this JSON into Claude";
+    document.getElementById("output-desc").innerHTML = 'Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will score your Isometric eligibility assessment and FCAD reasoning, reveal the correct answer, and explain any criteria you missed.';
+    document.getElementById("output-hint").innerHTML = '<strong>Paste prompt for Claude:</strong><br/>Paste the JSON above and add: <em>"Please evaluate my Isometric Reforestation eligibility assessment. Score my determination and reasoning (0–10 each), reveal the correct answer, and explain any criteria I missed."</em>';
+    document.getElementById("next-btn").onclick = startIsoDrill;
+    document.getElementById("next-btn").textContent = "Next Scenario 🌳";
   } else {
     document.getElementById("output-heading").textContent = "📋 Copy this JSON into Claude";
     document.getElementById("output-desc").innerHTML = 'Paste into <strong style="color:#74b08a">claude.ai</strong> — Claude will score your vocabulary accuracy and FCAD structure, highlight your best sentence, and give you one concrete rewrite tip.';
@@ -648,7 +997,7 @@ async function pickOutputFolder() {
 async function saveJson() {
   const text = document.getElementById("json-output").textContent;
   const date = new Date().toISOString().slice(0, 10);
-  const prefix = _currentDrillType === "reading" ? "carbon-reading" : _currentDrillType === "vm47" ? "carbon-vm47" : "carbon-vocab";
+  const prefix = _currentDrillType === "reading" ? "carbon-reading" : _currentDrillType === "vm47" ? "carbon-vm47" : _currentDrillType === "iso" ? "carbon-iso" : "carbon-vocab";
   const filename = `${prefix}-${date}.json`;
 
   if (_outputDirHandle) {
