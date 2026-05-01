@@ -227,19 +227,20 @@
     .login-btn:hover { background: var(--green-lt); }
     /* ── WRITING DRILL OVERLAY ── */
     #stage-drill:not(.hidden) { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: #0d1f18; font-family: 'Courier New', monospace; }
-    .drill-top-bar { padding: 10px 20px; border-bottom: 1px solid #1e3a2e; display: flex; align-items: center; gap: 12px; flex-shrink: 0; position: relative; }
-    .drill-top-title { font-size: 13px; font-weight: normal; color: #6aad88; letter-spacing: 0.08em; text-transform: uppercase; }
+    #stage-reading:not(.hidden) { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: #0d1f18; font-family: 'Courier New', monospace; }
+    .drill-top-bar { padding: 8px 14px; border-bottom: 1px solid #1e3a2e; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .drill-home-btn { padding: 5px 12px; border-radius: 2px; border: 1px solid #2e5a44; background: transparent; color: #6aad88; font-size: 11px; font-family: 'Courier New', monospace; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+    .drill-home-btn:hover { background: #1a3a2a; }
+    .drill-tabs { display: flex; gap: 3px; }
+    .drill-tab { padding: 5px 16px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; border-radius: 2px; border: 1px solid #1e3a2e; background: transparent; color: #3a6a52; letter-spacing: 0.04em; transition: all 0.15s; white-space: nowrap; }
+    .drill-tab:hover { color: #6aad88; border-color: #3a6a52; }
+    .drill-tab.active { background: #1a3a2a; color: #8ac4a4; border-color: #3a7a5a; }
     .drill-main { flex: 1; display: grid; grid-template-columns: 360px 1fr; overflow: hidden; min-height: 0; }
     .drill-left { border-right: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow: hidden; }
-    .drill-section { border-bottom: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
-    .drill-section.expanded { flex: 1; flex-shrink: 1; min-height: 0; }
-    .drill-sec-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; user-select: none; background: #0a1a12; flex-shrink: 0; }
-    .drill-sec-header:hover { background: #111f18; }
-    .drill-sec-title { font-size: 12px; font-weight: bold; color: #8ac4a4; letter-spacing: 0.04em; font-family: 'Courier New', monospace; }
-    .drill-chevron { font-size: 10px; color: #3a6a52; transition: transform 0.2s; }
-    .drill-section.expanded .drill-chevron { transform: rotate(180deg); }
-    .drill-sec-body { display: none; flex-direction: column; gap: 12px; padding: 14px 16px; overflow-y: auto; flex: 1; min-height: 0; }
-    .drill-section.expanded .drill-sec-body { display: flex; }
+    .drill-section { display: none; flex-direction: column; overflow: hidden; flex: 1; min-height: 0; }
+    .drill-section.expanded { display: flex; }
+    .drill-sec-header { display: none; }
+    .drill-sec-body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; overflow-y: auto; flex: 1; min-height: 0; }
     .drill-panel-sub { font-size: 11px; color: #4a7a62; line-height: 1.5; flex-shrink: 0; font-family: 'Courier New', monospace; }
     .drill-word-block { display: flex; flex-direction: column; gap: 5px; }
     .drill-word-tag-row { display: flex; align-items: center; gap: 8px; }
@@ -249,7 +250,7 @@
     .drill-def-area { background: #061210; border: 1px solid #1e3a2e; color: #c8ddd5; font-family: 'Courier New', monospace; font-size: 11px; padding: 7px 9px; resize: none; line-height: 1.5; height: 70px; border-radius: 2px; outline: none; width: 100%; }
     .drill-def-area:focus { border-color: #3a7a5a; }
     .drill-def-area::placeholder { color: #2a5040; }
-    .drill-scenario-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.7; color: #a8ccb8; font-family: 'Courier New', monospace; }
+    .drill-scenario-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.7; color: #a8ccb8; font-family: 'Courier New', monospace; flex: 1; overflow-y: auto; min-height: 0; }
     .drill-scenario-box em { color: #6aad88; font-style: normal; font-weight: bold; }
     .drill-fcad-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
     .drill-chip { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 5px 9px; font-size: 11px; color: #6aad88; font-family: 'Courier New', monospace; display: flex; align-items: center; gap: 5px; }
@@ -269,8 +270,7 @@
     .drill-btn-generate:hover { background: #3a7a58; }
     .drill-error-msg { font-size: 11px; color: #f87171; font-family: 'Courier New', monospace; }
     /* ── READING DRILL OVERLAY ── */
-    #stage-reading:not(.hidden) { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: #0d1f18; font-family: 'Courier New', monospace; }
-    .drill-passage-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.9; color: #a8ccb8; font-family: 'Courier New', monospace; }
+    .drill-passage-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.9; color: #a8ccb8; font-family: 'Courier New', monospace; flex: 1; overflow-y: auto; min-height: 0; }
     .drill-passage-box .s { color: #3a6a52; font-size: 10px; margin-right: 0.35rem; font-family: 'Courier New', monospace; }
     .drill-badge-grammar { display: inline-block; background: #1a1a3a; border: 1px solid #3a3a7a; border-radius: 2px; padding: 1px 6px; font-size: 10px; color: #7a7ac8; font-family: 'Courier New', monospace; }
     .drill-badge-logic { display: inline-block; background: #2a1a08; border: 1px solid #6a3a10; border-radius: 2px; padding: 1px 6px; font-size: 10px; color: #c07838; font-family: 'Courier New', monospace; }
@@ -375,8 +375,12 @@
   <!-- ═══════════════════════════════════════════════════ VOCAB DRILL -->
   <div id="stage-drill" class="hidden">
     <div class="drill-top-bar">
-      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
-      <span class="drill-top-title">Carbon Drill — Writing &amp; Reading</span>
+      <button class="drill-home-btn" onclick="show('stage-welcome')">← Home</button>
+      <div class="drill-tabs">
+        <button class="drill-tab active" id="drill-tab-vocab"    onclick="switchDrillTab('vocab')">① Vocabulary</button>
+        <button class="drill-tab"        id="drill-tab-scenario" onclick="switchDrillTab('scenario')">② Scenario</button>
+        <button class="drill-tab"        id="drill-tab-response" onclick="switchDrillTab('response')">③ Response</button>
+      </div>
     </div>
     <div class="drill-main">
       <div class="drill-left">
@@ -440,8 +444,12 @@
   <!-- ══════════════════════════════════════════════════ READING DRILL -->
   <div id="stage-reading" class="hidden">
     <div class="drill-top-bar">
-      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
-      <span class="drill-top-title">Carbon Drill — Reading &amp; Editing</span>
+      <button class="drill-home-btn" onclick="show('stage-welcome')">← Home</button>
+      <div class="drill-tabs">
+        <button class="drill-tab active" id="read-tab-passage" onclick="switchReadingTab('passage')">① Passage</button>
+        <button class="drill-tab"        id="read-tab-grammar" onclick="switchReadingTab('grammar')">② Grammar</button>
+        <button class="drill-tab"        id="read-tab-logic"   onclick="switchReadingTab('logic')">③ Logic</button>
+      </div>
     </div>
     <div class="drill-main">
       <div class="drill-left">
@@ -768,19 +776,10 @@ function togglePanel(prefix, name) {
   });
 }
 
-function toggleDrillSection(name) {
+function switchDrillTab(name) {
   ['vocab', 'scenario', 'response'].forEach(s => {
-    const el = document.getElementById(`drill-sec-${s}`);
-    if (!el) return;
-    const isTarget = s === name;
-    const isExpanded = el.classList.contains('expanded');
-    if (isTarget && !isExpanded) {
-      el.classList.add('expanded');
-      el.querySelector('.drill-chevron').textContent = '▲';
-    } else if (!isTarget) {
-      el.classList.remove('expanded');
-      el.querySelector('.drill-chevron').textContent = '▼';
-    }
+    document.getElementById(`drill-sec-${s}`)?.classList.toggle('expanded', s === name);
+    document.getElementById(`drill-tab-${s}`)?.classList.toggle('active', s === name);
   });
 }
 
@@ -816,18 +815,7 @@ function startVocabDrill() {
   document.getElementById("word-count").textContent = "0 words";
   const err = document.getElementById("drill-error");
   err.classList.add("hidden"); err.textContent = "";
-  // reset accordion: vocab open, others collapsed
-  ['vocab', 'scenario', 'response'].forEach(s => {
-    const el = document.getElementById(`drill-sec-${s}`);
-    if (!el) return;
-    if (s === 'vocab') {
-      el.classList.add('expanded');
-      el.querySelector('.drill-chevron').textContent = '▲';
-    } else {
-      el.classList.remove('expanded');
-      el.querySelector('.drill-chevron').textContent = '▼';
-    }
-  });
+  switchDrillTab('vocab');
   show("stage-drill");
   requestAnimationFrame(() => {
     // Pick a VM47 scenario location that differs from the last one shown
@@ -918,19 +906,7 @@ function startReadingDrill() {
   const err = document.getElementById("reading-error");
   err.classList.add("hidden"); err.textContent = "";
 
-  // reset accordion: passage open, others collapsed
-  ['passage', 'grammar', 'logic'].forEach(s => {
-    const el = document.getElementById(`read-sec-${s}`);
-    if (!el) return;
-    if (s === 'passage') {
-      el.classList.add('expanded');
-      el.querySelector('.drill-chevron').textContent = '▲';
-    } else {
-      el.classList.remove('expanded');
-      el.querySelector('.drill-chevron').textContent = '▼';
-    }
-  });
-
+  switchReadingTab('passage');
   show("stage-reading");
   requestAnimationFrame(() => {
     let mapIdx;
@@ -964,17 +940,10 @@ function startReadingDrill() {
   });
 }
 
-function toggleReadingSection(name) {
+function switchReadingTab(name) {
   ['passage', 'grammar', 'logic'].forEach(s => {
-    const el = document.getElementById(`read-sec-${s}`);
-    if (!el) return;
-    if (s === name && !el.classList.contains('expanded')) {
-      el.classList.add('expanded');
-      el.querySelector('.drill-chevron').textContent = '▲';
-    } else if (s !== name) {
-      el.classList.remove('expanded');
-      el.querySelector('.drill-chevron').textContent = '▼';
-    }
+    document.getElementById(`read-sec-${s}`)?.classList.toggle('expanded', s === name);
+    document.getElementById(`read-tab-${s}`)?.classList.toggle('active', s === name);
   });
 }
 
