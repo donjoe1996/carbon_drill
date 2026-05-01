@@ -945,6 +945,13 @@ const MAP_LEGENDS = {
       <img class="mleg-img" src="https://data.apps.fao.org/map/gsrv/gsrv1/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=boundaries:aez&FORMAT=image/png" alt="FAO AEZ legend">
       <span class="mleg-note" style="display:block;margin-top:6px">© FAO — Global Agro-Ecological Zones (GAEZ v4)</span>
     </div>`
+  },
+  fao_haz: {
+    meta: { name: 'FAO Climate Risk — Hazard-Biophysical Index 2025', type: 'WMTS', url: 'https://data.apps.fao.org/map/wmts/wmts' },
+    legend: `<div class="mleg-legend-wrap">
+      <img class="mleg-img" src="https://data.apps.fao.org/map/wmts/wmts?request=GetLegendGraphic&VERSION=1.0.0&layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&FORMAT=image/png&STRICT=false&service=WMTS" alt="HAZ-BI legend">
+      <span class="mleg-note" style="display:block;margin-top:6px">© FAO CRTB — Composite hazard index (FIRES shown). Hazard types: FIRES · FLOOD · FROST · TMAX · SPI · PMAX</span>
+    </div>`
   }
 };
 
@@ -957,8 +964,8 @@ function renderLegend(key) {
   </div>${legend}`;
 }
 
-function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer) {
-  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer].filter(Boolean);
+function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer) {
+  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer, hazLayer].filter(Boolean);
   map.on('layeradd', function(e) {
     if (overlays.includes(e.layer))
       overlays.forEach(ol => { if (ol !== e.layer && map.hasLayer(ol)) map.removeLayer(ol); });
@@ -971,6 +978,7 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLaye
     else if (map.hasLayer(esaLayer))                   el.innerHTML = renderLegend('esa');
     else if (map.hasLayer(ecoLayer))                   el.innerHTML = renderLegend('ecoregions');
     else if (faoLayer && map.hasLayer(faoLayer))       el.innerHTML = renderLegend('fao_aez');
+    else if (hazLayer && map.hasLayer(hazLayer))       el.innerHTML = renderLegend('fao_haz');
     else if (map.hasLayer(terrainLayer))               el.innerHTML = renderLegend('terrain');
     else                                               el.innerHTML = renderLegend('satellite');
     if (initialized && panelId) {
@@ -1080,6 +1088,31 @@ function queryPixelInfo(latlng, type, map) {
           </div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+
+  } else if (type === 'haz') {
+    const size = map.getSize();
+    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
+    const pt = map.latLngToContainerPoint(latlng);
+    const bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+    const url = `https://data.apps.fao.org/map/wmts/wmts?service=WMTS&version=1.0.0&request=GetFeatureInfo` +
+      `&layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857` +
+      `&infoFormat=application/json&i=${Math.round(pt.x)}&j=${Math.round(pt.y)}` +
+      `&width=${size.x}&height=${size.y}&bbox=${bbox}&crs=EPSG:3857&dim_haz-bi-2025=FIRES`;
+    fetch(url).then(r => r.json())
+      .then(d => {
+        const f = d.features?.[0]?.properties || d;
+        const val = f.value ?? f.pixel_value ?? f.rasterValue ?? null;
+        if (val === null || val === undefined) {
+          popup.setContent('<div class="soil-pop-loading">No hazard data here</div>'); return;
+        }
+        const level = val >= 80 ? 'Very High' : val >= 60 ? 'High' : val >= 40 ? 'Moderate' : val >= 20 ? 'Low' : 'Very Low';
+        popup.setContent(`
+          <div class="soil-pop-head"><div class="soil-pop-label">FAO Climate Hazard — FIRES 2025</div><div class="soil-pop-name">${level}</div></div>
+          <div class="soil-pop-rows">
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Index value</span><span style="margin-left:auto">${val}</span></div>
+          </div>${coord}`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
   }
 }
 
@@ -1091,7 +1124,8 @@ function addMapContextMenu(map) {
     <div class="map-ctx-item" data-query="soil"><span class="ctx-icon">🪨</span>WRB Soil Group<span class="map-ctx-sub">SoilGrids</span></div>
     <div class="map-ctx-item" data-query="eco"><span class="ctx-icon">🌍</span>Ecoregion<span class="map-ctx-sub">RESOLVE</span></div>
     <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>
-    <div class="map-ctx-item" data-query="aez"><span class="ctx-icon">🌾</span>Agro-Eco Zone<span class="map-ctx-sub">FAO GAEZ v4</span></div>`;
+    <div class="map-ctx-item" data-query="aez"><span class="ctx-icon">🌾</span>Agro-Eco Zone<span class="map-ctx-sub">FAO GAEZ v4</span></div>
+    <div class="map-ctx-item" data-query="haz"><span class="ctx-icon">🔥</span>Climate Hazard<span class="map-ctx-sub">FAO CRTB 2025</span></div>`;
 
   // Prevent Leaflet from intercepting any mouse events on the menu
   L.DomEvent.disableClickPropagation(menu);
@@ -1204,12 +1238,16 @@ function startVocabDrill() {
         layers: "boundaries:aez", format: "image/png", transparent: true,
         opacity: 0.75, attribution: "© FAO",
       });
+      const drillHaz = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
+      );
       L.control.layers(
         { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
-        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌾 FAO Agro-Eco Zones": drillFao },
+        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌾 FAO Agro-Eco Zones": drillFao, "🔥 FAO Climate Hazard 2025": drillHaz },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao);
+      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao, drillHaz);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
@@ -1317,12 +1355,16 @@ function startReadingDrill() {
         layers: "boundaries:aez", format: "image/png", transparent: true,
         opacity: 0.75, attribution: "© FAO",
       });
+      const readHaz = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
+      );
       L.control.layers(
         { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
-        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌾 FAO Agro-Eco Zones": readFao },
+        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌾 FAO Agro-Eco Zones": readFao, "🔥 FAO Climate Hazard 2025": readHaz },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao);
+      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao, readHaz);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
@@ -1415,12 +1457,16 @@ function startVM47Drill() {
         layers: "boundaries:aez", format: "image/png", transparent: true,
         opacity: 0.75, attribution: "© FAO",
       });
+      const vm47Haz = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
+      );
       L.control.layers(
         { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
-        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌾 FAO Agro-Eco Zones": vm47Fao },
+        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌾 FAO Agro-Eco Zones": vm47Fao, "🔥 FAO Climate Hazard 2025": vm47Haz },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao);
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao, vm47Haz);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
@@ -1531,12 +1577,16 @@ function startIsoDrill() {
         layers: "boundaries:aez", format: "image/png", transparent: true,
         opacity: 0.75, attribution: "© FAO",
       });
+      const isoHaz = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
+      );
       L.control.layers(
         { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
-        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌾 FAO Agro-Eco Zones": isoFao },
+        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌾 FAO Agro-Eco Zones": isoFao, "🔥 FAO Climate Hazard 2025": isoHaz },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao);
+      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao, isoHaz);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
