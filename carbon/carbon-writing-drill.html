@@ -394,7 +394,7 @@
       <div class="left-col" style="width:auto">
 
         <div class="panel open" id="vocab-drill-panel-vocab">
-          <div class="panel-header" onclick="togglePanel('vocab-drill','vocab',['vocab','scenario','response'])">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','vocab',['vocab','scenario','response','legend'])">
             <div class="panel-num">1</div>
             <div class="panel-title">Vocabulary — Define each word</div>
             <div class="panel-chevron">▼</div>
@@ -405,7 +405,7 @@
         </div>
 
         <div class="panel closed" id="vocab-drill-panel-scenario">
-          <div class="panel-header" onclick="togglePanel('vocab-drill','scenario',['vocab','scenario','response'])">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','scenario',['vocab','scenario','response','legend'])">
             <div class="panel-num">2</div>
             <div class="panel-title">Writing Scenario</div>
             <div class="panel-chevron">▼</div>
@@ -416,7 +416,7 @@
         </div>
 
         <div class="panel closed" id="vocab-drill-panel-response">
-          <div class="panel-header" onclick="togglePanel('vocab-drill','response',['vocab','scenario','response'])">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','response',['vocab','scenario','response','legend'])">
             <div class="panel-num">3</div>
             <div class="panel-title">Your Response — FCAD (2 paragraphs)</div>
             <div class="panel-chevron">▼</div>
@@ -431,7 +431,6 @@
                 <span class="assess-fcad-tag">D Detail</span>
               </div>
             </div>
-            <div class="map-legend-area" id="drill-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="essay" class="det-textarea"
                 placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
@@ -445,6 +444,17 @@
                 <button class="btn-generate" onclick="generateVocabOutput()">Generate JSON →</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="vocab-drill-panel-legend">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','legend',['vocab','scenario','response','legend'])">
+            <div class="panel-num">4</div>
+            <div class="panel-title">Legend</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="map-legend-area" id="drill-map-legend" style="border-top:none"></div>
           </div>
         </div>
 
@@ -472,7 +482,7 @@
       <div class="left-col" style="width:auto">
 
         <div class="panel open" id="read-drill-panel-passage">
-          <div class="panel-header" onclick="togglePanel('read-drill','passage',['passage','grammar','logic'])">
+          <div class="panel-header" onclick="togglePanel('read-drill','passage',['passage','grammar','logic','legend'])">
             <div class="panel-num">1</div>
             <div class="panel-title">Read this passage carefully</div>
             <div class="panel-chevron">▼</div>
@@ -486,7 +496,7 @@
         </div>
 
         <div class="panel closed" id="read-drill-panel-grammar">
-          <div class="panel-header" onclick="togglePanel('read-drill','grammar',['passage','grammar','logic'])">
+          <div class="panel-header" onclick="togglePanel('read-drill','grammar',['passage','grammar','logic','legend'])">
             <div class="panel-num">2</div>
             <div class="panel-title">Grammar Errors</div>
             <div class="panel-chevron">▼</div>
@@ -503,7 +513,7 @@
         </div>
 
         <div class="panel closed" id="read-drill-panel-logic">
-          <div class="panel-header" onclick="togglePanel('read-drill','logic',['passage','grammar','logic'])">
+          <div class="panel-header" onclick="togglePanel('read-drill','logic',['passage','grammar','logic','legend'])">
             <div class="panel-num">3</div>
             <div class="panel-title">Logical Flaws</div>
             <div class="panel-chevron">▼</div>
@@ -512,7 +522,6 @@
             <div class="det-section">
               <div class="det-label">SENTENCE · FLAW · WHY IT FAILS</div>
             </div>
-            <div class="map-legend-area" id="reading-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="reading-logic" class="det-textarea"
                 placeholder="e.g. S5: The conclusion doesn't follow — other factors could explain the trend"></textarea>
@@ -525,6 +534,17 @@
                 <button class="btn-generate" onclick="generateReadingOutput()">Generate JSON →</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="read-drill-panel-legend">
+          <div class="panel-header" onclick="togglePanel('read-drill','legend',['passage','grammar','logic','legend'])">
+            <div class="panel-num">4</div>
+            <div class="panel-title">Legend</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="map-legend-area" id="reading-map-legend" style="border-top:none"></div>
           </div>
         </div>
 
@@ -600,7 +620,6 @@
                 <span class="assess-fcad-tag">D Detail</span>
               </div>
             </div>
-            <div class="map-legend-area" id="vm47-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="vm47-essay" class="det-textarea"
                 placeholder="Focus: your determination. Context: which VM0047 condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
@@ -614,6 +633,17 @@
               </div>
             </div>
             <div class="assess-error hidden" id="vm47-error"></div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="vm47-panel-legend">
+          <div class="panel-header" onclick="togglePanel('vm47','legend')">
+            <div class="panel-num">4</div>
+            <div class="panel-title">Legend</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="map-legend-area" id="vm47-map-legend" style="border-top:none"></div>
           </div>
         </div>
 
@@ -685,7 +715,6 @@
                 <span class="assess-fcad-tag">D Detail</span>
               </div>
             </div>
-            <div class="map-legend-area" id="iso-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="iso-essay" class="det-textarea"
                 placeholder="Focus: your determination. Context: which Isometric condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
@@ -699,6 +728,17 @@
               </div>
             </div>
             <div class="assess-error hidden" id="iso-error"></div>
+          </div>
+        </div>
+
+        <div class="panel closed" id="iso-panel-legend">
+          <div class="panel-header" onclick="togglePanel('iso','legend')">
+            <div class="panel-num">4</div>
+            <div class="panel-title">Legend</div>
+            <div class="panel-chevron">▼</div>
+          </div>
+          <div class="panel-body">
+            <div class="map-legend-area" id="iso-map-legend" style="border-top:none"></div>
           </div>
         </div>
 
@@ -800,7 +840,7 @@ function show(id) {
 }
 
 function togglePanel(prefix, name, panels) {
-  (panels || ['scenario', 'criteria', 'det']).forEach(p => {
+  (panels || ['scenario', 'criteria', 'det', 'legend']).forEach(p => {
     const el = document.getElementById(`${prefix}-panel-${p}`);
     if (!el) return;
     if (p === name) {
@@ -891,7 +931,7 @@ function startVocabDrill() {
   const err = document.getElementById("drill-error");
   err.classList.add("hidden"); err.textContent = "";
   // reset accordion — vocab open
-  ['vocab', 'scenario', 'response'].forEach((p, i) => {
+  ['vocab', 'scenario', 'response', 'legend'].forEach((p, i) => {
     const el = document.getElementById(`vocab-drill-panel-${p}`);
     if (!el) return;
     el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
@@ -993,7 +1033,7 @@ function startReadingDrill() {
   const err = document.getElementById("reading-error");
   err.classList.add("hidden"); err.textContent = "";
   // reset accordion — passage open
-  ['passage', 'grammar', 'logic'].forEach((p, i) => {
+  ['passage', 'grammar', 'logic', 'legend'].forEach((p, i) => {
     const el = document.getElementById(`read-drill-panel-${p}`);
     if (!el) return;
     el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
@@ -1084,7 +1124,7 @@ function startVM47Drill() {
   document.getElementById("vm47-word-count").textContent = "0 words";
   const err = document.getElementById("vm47-error");
   err.classList.add("hidden"); err.textContent = "";
-  ['scenario', 'criteria', 'det'].forEach((p, i) => {
+  ['scenario', 'criteria', 'det', 'legend'].forEach((p, i) => {
     const el = document.getElementById(`vm47-panel-${p}`);
     el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
   });
@@ -1188,7 +1228,7 @@ function startIsoDrill() {
   document.getElementById("iso-word-count").textContent = "0 words";
   const err = document.getElementById("iso-error");
   err.classList.add("hidden"); err.textContent = "";
-  ['scenario', 'criteria', 'det'].forEach((p, i) => {
+  ['scenario', 'criteria', 'det', 'legend'].forEach((p, i) => {
     const el = document.getElementById(`iso-panel-${p}`);
     el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
   });
