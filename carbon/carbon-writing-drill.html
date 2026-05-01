@@ -210,6 +210,11 @@
     .leaflet-control-layers-expanded { padding: 6px 10px 8px !important; }
     .leaflet-control-layers label { color: var(--text-dim) !important; font-family: 'DM Sans', sans-serif !important; font-size: 12px !important; cursor: pointer; }
     .leaflet-control-layers-separator { border-color: var(--border) !important; }
+    /* ── SCALE BAR ── */
+    .leaflet-control-scale-line { background: rgba(13,31,23,.85); border: 1px solid var(--accent) !important; border-top: none !important; color: var(--text); font-family: 'DM Mono', monospace !important; font-size: 10px !important; padding: 1px 5px !important; white-space: nowrap; }
+    .leaflet-control-scale-line:not(:first-child) { border-top: 1px solid var(--accent) !important; border-bottom: none !important; }
+    /* ── ZOOM DISPLAY ── */
+    .zoom-display { background: rgba(13,31,23,.85); border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 11px; padding: 2px 8px; letter-spacing: .04em; pointer-events: none; }
     /* ── SOIL INFO POPUP ── */
     .soil-popup .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.5); padding: 0; }
     .soil-popup .leaflet-popup-content { margin: 0; min-width: 180px; }
@@ -941,6 +946,23 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, panelId
   render();
 }
 
+const ZoomDisplay = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd(map) {
+    this._el = L.DomUtil.create('div', 'zoom-display');
+    this._update();
+    map.on('zoomend', this._update, this);
+    return this._el;
+  },
+  onRemove(map) { map.off('zoomend', this._update, this); },
+  _update() { this._el.textContent = 'Z ' + this._map.getZoom(); }
+});
+
+function addMapControls(map) {
+  L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
+  new ZoomDisplay().addTo(map);
+}
+
 function addSoilClickHandler(map) {
   map.on('click', function(e) {
     const { lat, lng } = e.latlng;
@@ -1052,6 +1074,7 @@ function startVocabDrill() {
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
       setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, "vocab-drill-panel-legend");
+      addMapControls(_drillMap);
       addSoilClickHandler(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
@@ -1157,6 +1180,7 @@ function startReadingDrill() {
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
       setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, "read-drill-panel-legend");
+      addMapControls(_readingMap);
       addSoilClickHandler(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
@@ -1247,6 +1271,7 @@ function startVM47Drill() {
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
       setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, "vm47-panel-legend");
+      addMapControls(_vm47Map);
       addSoilClickHandler(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
@@ -1355,6 +1380,7 @@ function startIsoDrill() {
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
       setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, "iso-panel-legend");
+      addMapControls(_isoMap);
       addSoilClickHandler(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
