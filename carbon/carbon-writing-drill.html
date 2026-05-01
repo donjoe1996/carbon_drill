@@ -938,6 +938,13 @@ const MAP_LEGENDS = {
       <div class="mleg-row"><span class="mleg-dot" style="background:#e5d3a3"></span>Deserts & Xeric Shrublands</div>
       <div class="mleg-row"><span class="mleg-dot" style="background:#3b7b5e"></span>Mangroves</div>
     </div><span class="mleg-note" style="display:block;margin-top:6px">© RESOLVE / UNEP-WCMC — 846 ecoregions, 14 biomes</span></div>`
+  },
+  fao_aez: {
+    meta: { name: 'FAO Agro-Ecological Zones (AEZ)', type: 'WMS', url: 'https://data.apps.fao.org/map/gsrv/gsrv1/wms' },
+    legend: `<div class="mleg-legend-wrap">
+      <img class="mleg-img" src="https://data.apps.fao.org/map/gsrv/gsrv1/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=boundaries:aez&FORMAT=image/png" alt="FAO AEZ legend">
+      <span class="mleg-note" style="display:block;margin-top:6px">© FAO — Global Agro-Ecological Zones (GAEZ v4)</span>
+    </div>`
   }
 };
 
@@ -950,8 +957,8 @@ function renderLegend(key) {
   </div>${legend}`;
 }
 
-function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId) {
-  const overlays = [esaLayer, wrbLayer, ecoLayer];
+function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer) {
+  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer].filter(Boolean);
   map.on('layeradd', function(e) {
     if (overlays.includes(e.layer))
       overlays.forEach(ol => { if (ol !== e.layer && map.hasLayer(ol)) map.removeLayer(ol); });
@@ -960,11 +967,12 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLaye
   function render() {
     const el = document.getElementById(legendId);
     if (!el) return;
-    if (map.hasLayer(wrbLayer))          el.innerHTML = renderLegend('wrb');
-    else if (map.hasLayer(esaLayer))     el.innerHTML = renderLegend('esa');
-    else if (map.hasLayer(ecoLayer))     el.innerHTML = renderLegend('ecoregions');
-    else if (map.hasLayer(terrainLayer)) el.innerHTML = renderLegend('terrain');
-    else                                 el.innerHTML = renderLegend('satellite');
+    if (map.hasLayer(wrbLayer))                        el.innerHTML = renderLegend('wrb');
+    else if (map.hasLayer(esaLayer))                   el.innerHTML = renderLegend('esa');
+    else if (map.hasLayer(ecoLayer))                   el.innerHTML = renderLegend('ecoregions');
+    else if (faoLayer && map.hasLayer(faoLayer))       el.innerHTML = renderLegend('fao_aez');
+    else if (map.hasLayer(terrainLayer))               el.innerHTML = renderLegend('terrain');
+    else                                               el.innerHTML = renderLegend('satellite');
     if (initialized && panelId) {
       const panel = document.getElementById(panelId);
       if (panel) { panel.classList.add('open'); panel.classList.remove('closed'); }
@@ -1050,6 +1058,28 @@ function queryPixelInfo(latlng, type, map) {
           <div class="soil-pop-rows"><div class="soil-pop-row"><span style="color:var(--text-mut)">Class value</span><span style="margin-left:auto">${val}</span></div></div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+
+  } else if (type === 'aez') {
+    const size = map.getSize();
+    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
+    const pt = map.latLngToContainerPoint(latlng);
+    const url = `https://data.apps.fao.org/map/gsrv/gsrv1/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo` +
+      `&LAYERS=boundaries:aez&QUERY_LAYERS=boundaries:aez&INFO_FORMAT=application/json` +
+      `&WIDTH=${size.x}&HEIGHT=${size.y}&BBOX=${sw.lng},${sw.lat},${ne.lng},${ne.lat}` +
+      `&SRS=EPSG:4326&X=${Math.round(pt.x)}&Y=${Math.round(pt.y)}&FEATURE_COUNT=1`;
+    fetch(url).then(r => r.json())
+      .then(d => {
+        const f = d.features?.[0]?.properties;
+        if (!f) { popup.setContent('<div class="soil-pop-loading">No AEZ data here</div>'); return; }
+        const country = f.cty_nm || f.iso3code || '—';
+        const zone = f.aez_code ? `AEZ ${f.aez_code}` : '—';
+        popup.setContent(`
+          <div class="soil-pop-head"><div class="soil-pop-label">FAO Agro-Ecological Zone</div><div class="soil-pop-name">${zone}</div></div>
+          <div class="soil-pop-rows">
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Country</span><span style="margin-left:auto">${country}</span></div>
+          </div>${coord}`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
   }
 }
 
@@ -1060,7 +1090,8 @@ function addMapContextMenu(map) {
     <div class="map-ctx-header">Query pixel info</div>
     <div class="map-ctx-item" data-query="soil"><span class="ctx-icon">🪨</span>WRB Soil Group<span class="map-ctx-sub">SoilGrids</span></div>
     <div class="map-ctx-item" data-query="eco"><span class="ctx-icon">🌍</span>Ecoregion<span class="map-ctx-sub">RESOLVE</span></div>
-    <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>`;
+    <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>
+    <div class="map-ctx-item" data-query="aez"><span class="ctx-icon">🌾</span>Agro-Eco Zone<span class="map-ctx-sub">FAO GAEZ v4</span></div>`;
 
   // Prevent Leaflet from intercepting any mouse events on the menu
   L.DomEvent.disableClickPropagation(menu);
@@ -1169,12 +1200,16 @@ function startVocabDrill() {
       const drillEco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
       });
+      const drillFao = L.tileLayer.wms("https://data.apps.fao.org/map/gsrv/gsrv1/wms", {
+        layers: "boundaries:aez", format: "image/png", transparent: true,
+        opacity: 0.75, attribution: "© FAO",
+      });
       L.control.layers(
         { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
-        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco },
+        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌾 FAO Agro-Eco Zones": drillFao },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend");
+      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
@@ -1278,12 +1313,16 @@ function startReadingDrill() {
       const readEco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
       });
+      const readFao = L.tileLayer.wms("https://data.apps.fao.org/map/gsrv/gsrv1/wms", {
+        layers: "boundaries:aez", format: "image/png", transparent: true,
+        opacity: 0.75, attribution: "© FAO",
+      });
       L.control.layers(
         { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
-        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco },
+        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌾 FAO Agro-Eco Zones": readFao },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend");
+      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
@@ -1372,12 +1411,16 @@ function startVM47Drill() {
       const vm47Eco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
       });
+      const vm47Fao = L.tileLayer.wms("https://data.apps.fao.org/map/gsrv/gsrv1/wms", {
+        layers: "boundaries:aez", format: "image/png", transparent: true,
+        opacity: 0.75, attribution: "© FAO",
+      });
       L.control.layers(
         { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
-        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco },
+        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌾 FAO Agro-Eco Zones": vm47Fao },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend");
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
@@ -1484,12 +1527,16 @@ function startIsoDrill() {
       const isoEco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
       });
+      const isoFao = L.tileLayer.wms("https://data.apps.fao.org/map/gsrv/gsrv1/wms", {
+        layers: "boundaries:aez", format: "image/png", transparent: true,
+        opacity: 0.75, attribution: "© FAO",
+      });
       L.control.layers(
         { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
-        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco },
+        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌾 FAO Agro-Eco Zones": isoFao },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend");
+      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
