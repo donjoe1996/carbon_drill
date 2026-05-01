@@ -874,13 +874,19 @@ const MAP_LEGENDS = {
     <span class="mleg-note" style="display:block;margin-top:4px">© ISRIC — World Soil Information</span>`,
 };
 
-function setupMapLegend(map, legendId, esaLayer, wrbLayer) {
+function setupMapLegend(map, legendId, esaLayer, wrbLayer, panelId) {
+  let initialized = false;
   function render() {
     const el = document.getElementById(legendId);
     if (!el) return;
     if (map.hasLayer(wrbLayer))      el.innerHTML = MAP_LEGENDS.wrb;
     else if (map.hasLayer(esaLayer)) el.innerHTML = MAP_LEGENDS.esa;
     else                             el.innerHTML = MAP_LEGENDS.satellite;
+    if (initialized && panelId) {
+      const panel = document.getElementById(panelId);
+      if (panel) { panel.classList.add('open'); panel.classList.remove('closed'); }
+    }
+    initialized = true;
   }
   map.on('layeradd layerremove', render);
   render();
@@ -963,7 +969,7 @@ function startVocabDrill() {
         { "🪨 WRB Soil Groups": drillWrb },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", drillEsa, drillWrb);
+      setupMapLegend(_drillMap, "drill-map-legend", drillEsa, drillWrb, "vocab-drill-panel-legend");
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1064,7 +1070,7 @@ function startReadingDrill() {
         { "🪨 WRB Soil Groups": readWrb },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", readEsa, readWrb);
+      setupMapLegend(_readingMap, "reading-map-legend", readEsa, readWrb, "read-drill-panel-legend");
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1150,7 +1156,7 @@ function startVM47Drill() {
         { "🪨 WRB Soil Groups": vm47Wrb },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Esa, vm47Wrb);
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Esa, vm47Wrb, "vm47-panel-legend");
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1254,7 +1260,7 @@ function startIsoDrill() {
         { "🪨 WRB Soil Groups": isoWrb },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", isoEsa, isoWrb);
+      setupMapLegend(_isoMap, "iso-map-legend", isoEsa, isoWrb, "iso-panel-legend");
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
