@@ -1532,64 +1532,14 @@ function switchToDrill(type) {
 }
 
 // ─── RESOLVE BIOME TILE LAYER ─────────────────────────────────────────────────
-
-const _BIOME_DL = JSON.stringify([{
-  id: 0,
-  source: { type: 'mapLayer', mapLayerId: 0 },
-  drawingInfo: {
-    renderer: {
-      type: 'uniqueValue', field1: 'biome_num',
-      uniqueValueInfos: [
-        { value: '1',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [56,167,0,180],   outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '2',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [204,205,101,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '3',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [136,206,102,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '4',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [0,115,76,180],    outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '5',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [69,137,112,180],  outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '6',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [122,182,245,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '7',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [254,170,1,180],   outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '8',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [254,255,115,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '9',  symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [190,231,255,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '10', symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [214,195,157,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '11', symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [158,215,194,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '12', symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [254,0,0,180],     outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '13', symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [204,103,103,180], outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-        { value: '14', symbol: { type: 'esriSFS', style: 'esriSFSSolid', color: [254,1,196,180],   outline: { type: 'esriSLS', style: 'esriSLSNull' } } },
-      ]
-    }
-  }
-}]);
-
-// ArcGIS export URL length limit (~2000 chars) is exceeded by 14 biomes — use POST
-const BiomeTileLayer = L.TileLayer.extend({
-  createTile(coords, done) {
-    const img = document.createElement('img');
-    img.alt = '';
-    const { x, y, z } = coords;
-    const n = Math.pow(2, z);
-    const halfEarth = 20037508.3427892;
-    const tileM = 2 * halfEarth / n;
-    const xmin = -halfEarth + x * tileM;
-    const ymax =  halfEarth - y * tileM;
-    const bbox = `${xmin.toFixed(2)},${(ymax - tileM).toFixed(2)},${(xmin + tileM).toFixed(2)},${ymax.toFixed(2)}`;
-    const body = new URLSearchParams({
-      bbox, bboxSR: '3857', imageSR: '3857', size: '256,256',
-      format: 'png32', transparent: 'true', f: 'image',
-      dynamicLayers: _BIOME_DL
-    });
-    fetch('https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/export', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    })
-    .then(r => r.blob())
-    .then(blob => {
-      img.onload = () => done(null, img);
-      img.src = URL.createObjectURL(blob);
-    })
-    .catch(() => done('biome tile failed', img));
-    return img;
-  }
-});
+// Same tile source as ecoregions — biomes and ecoregions are the same dataset,
+// differing only in styling. Biome-level info is returned by the pixel query.
+function makeBiomeTileLayer() {
+  return L.tileLayer(
+    "https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC" }
+  );
+}
 
 // ─── VOCAB DRILL ─────────────────────────────────────────────────────────────
 
@@ -1670,7 +1620,7 @@ function startVocabDrill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
       );
-      const drillBiome = new BiomeTileLayer('', { opacity: 0.8, attribution: "© RESOLVE / UNEP-WCMC" });
+      const drillBiome = makeBiomeTileLayer();
       L.control.layers(
         { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
         { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌱 RESOLVE Biomes": drillBiome, "🌾 FAO Agro-Eco Zones": drillFao, "🔥 FAO Climate Hazard 2025": drillHaz, "🐄 FAO Livestock Density 2020": drillGlw },
@@ -1792,7 +1742,7 @@ function startReadingDrill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
       );
-      const readBiome = new BiomeTileLayer('', { opacity: 0.8, attribution: "© RESOLVE / UNEP-WCMC" });
+      const readBiome = makeBiomeTileLayer();
       L.control.layers(
         { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
         { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌱 RESOLVE Biomes": readBiome, "🌾 FAO Agro-Eco Zones": readFao, "🔥 FAO Climate Hazard 2025": readHaz, "🐄 FAO Livestock Density 2020": readGlw },
@@ -1899,7 +1849,7 @@ function startVM47Drill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
       );
-      const vm47Biome = new BiomeTileLayer('', { opacity: 0.8, attribution: "© RESOLVE / UNEP-WCMC" });
+      const vm47Biome = makeBiomeTileLayer();
       L.control.layers(
         { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
         { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌱 RESOLVE Biomes": vm47Biome, "🌾 FAO Agro-Eco Zones": vm47Fao, "🔥 FAO Climate Hazard 2025": vm47Haz, "🐄 FAO Livestock Density 2020": vm47Glw },
@@ -2024,7 +1974,7 @@ function startIsoDrill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
       );
-      const isoBiome = new BiomeTileLayer('', { opacity: 0.8, attribution: "© RESOLVE / UNEP-WCMC" });
+      const isoBiome = makeBiomeTileLayer();
       L.control.layers(
         { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
         { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌱 RESOLVE Biomes": isoBiome, "🌾 FAO Agro-Eco Zones": isoFao, "🔥 FAO Climate Hazard 2025": isoHaz, "🐄 FAO Livestock Density 2020": isoGlw },
