@@ -267,6 +267,15 @@
     .drill-btn-generate { background: #2a6a48; border: 1px solid #3a8a60; color: #c8ddd5; padding: 5px 16px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; border-radius: 2px; }
     .drill-btn-generate:hover { background: #3a7a58; }
     .drill-error-msg { font-size: 11px; color: #f87171; font-family: 'Courier New', monospace; }
+    /* ── MAP LEGEND PANEL ── */
+    .map-legend-area { flex-shrink: 0; padding: 10px 16px; border-top: 1px solid var(--border2); background: var(--bg); }
+    .map-legend-area:empty { display: none; }
+    .mleg-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+    .mleg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+    .mleg-row { display: flex; align-items: center; gap: 6px; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+    .mleg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
+    .mleg-note { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); }
+    .mleg-img { max-width: 100%; display: block; margin-top: 6px; border-radius: 3px; }
     /* ── READING DRILL OVERLAY ── */
     .drill-passage-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.9; color: #a8ccb8; font-family: 'Courier New', monospace; }
     .drill-passage-box .s { color: #3a6a52; font-size: 10px; margin-right: 0.35rem; font-family: 'Courier New', monospace; }
@@ -422,6 +431,7 @@
                 <span class="assess-fcad-tag">D Detail</span>
               </div>
             </div>
+            <div class="map-legend-area" id="drill-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="essay" class="det-textarea"
                 placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
@@ -502,6 +512,7 @@
             <div class="det-section">
               <div class="det-label">SENTENCE · FLAW · WHY IT FAILS</div>
             </div>
+            <div class="map-legend-area" id="reading-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="reading-logic" class="det-textarea"
                 placeholder="e.g. S5: The conclusion doesn't follow — other factors could explain the trend"></textarea>
@@ -589,6 +600,7 @@
                 <span class="assess-fcad-tag">D Detail</span>
               </div>
             </div>
+            <div class="map-legend-area" id="vm47-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="vm47-essay" class="det-textarea"
                 placeholder="Focus: your determination. Context: which VM0047 condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
@@ -673,6 +685,7 @@
                 <span class="assess-fcad-tag">D Detail</span>
               </div>
             </div>
+            <div class="map-legend-area" id="iso-map-legend"></div>
             <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
               <textarea id="iso-essay" class="det-textarea"
                 placeholder="Focus: your determination. Context: which Isometric condition applies and why. Action: proceed or address the gap. Detail: cite specific figures from the scenario."
@@ -799,6 +812,40 @@ function togglePanel(prefix, name, panels) {
   });
 }
 
+// ─── MAP LEGEND ──────────────────────────────────────────────────────────────
+
+const MAP_LEGENDS = {
+  satellite: '<span class="mleg-note">🛰 Google Satellite — no thematic legend</span>',
+  esa: `<div class="mleg-title">ESA WorldCover 2021</div><div class="mleg-grid">
+    <div class="mleg-row"><span class="mleg-dot" style="background:#006400"></span>Tree cover</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#ffbb22"></span>Shrubland</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#ffff4c"></span>Grassland</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#f096ff"></span>Cropland</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#fa0000"></span>Built-up</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#b4b4b4"></span>Barren / sparse veg.</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#f0f0f0"></span>Snow and ice</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#0064c8"></span>Permanent water</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#0096a0"></span>Herbaceous wetland</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#00cf75"></span>Mangroves</div>
+    <div class="mleg-row"><span class="mleg-dot" style="background:#fae6a0"></span>Moss and lichen</div>
+  </div>`,
+  wrb: `<div class="mleg-title">WRB Soil Groups — most probable class</div>
+    <img class="mleg-img" src="https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png" alt="WRB legend">
+    <span class="mleg-note" style="display:block;margin-top:4px">© ISRIC — World Soil Information</span>`,
+};
+
+function setupMapLegend(map, legendId, esaLayer, wrbLayer) {
+  function render() {
+    const el = document.getElementById(legendId);
+    if (!el) return;
+    if (map.hasLayer(wrbLayer))      el.innerHTML = MAP_LEGENDS.wrb;
+    else if (map.hasLayer(esaLayer)) el.innerHTML = MAP_LEGENDS.esa;
+    else                             el.innerHTML = MAP_LEGENDS.satellite;
+  }
+  map.on('layeradd layerremove', render);
+  render();
+}
+
 function updateDrillTabs(activeType) {
   document.querySelectorAll('.drill-tab[data-drill]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.drill === activeType);
@@ -876,6 +923,7 @@ function startVocabDrill() {
         { "🪨 WRB Soil Groups": drillWrb },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
+      setupMapLegend(_drillMap, "drill-map-legend", drillEsa, drillWrb);
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -976,6 +1024,7 @@ function startReadingDrill() {
         { "🪨 WRB Soil Groups": readWrb },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
+      setupMapLegend(_readingMap, "reading-map-legend", readEsa, readWrb);
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1061,6 +1110,7 @@ function startVM47Drill() {
         { "🪨 WRB Soil Groups": vm47Wrb },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Esa, vm47Wrb);
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1164,6 +1214,7 @@ function startIsoDrill() {
         { "🪨 WRB Soil Groups": isoWrb },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
+      setupMapLegend(_isoMap, "iso-map-legend", isoEsa, isoWrb);
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
