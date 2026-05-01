@@ -236,11 +236,11 @@
     .drill-tab:hover { color: #6aad88; border-color: #3a6a52; }
     .drill-tab.active { background: #1a3a2a; color: #8ac4a4; border-color: #3a7a5a; }
     .drill-main { flex: 1; display: grid; grid-template-columns: 360px 1fr; overflow: hidden; min-height: 0; }
-    .drill-left { border-right: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow: hidden; }
-    .drill-section { display: none; flex-direction: column; overflow: hidden; flex: 1; min-height: 0; }
-    .drill-section.expanded { display: flex; }
-    .drill-sec-header { display: none; }
-    .drill-sec-body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; overflow-y: auto; flex: 1; min-height: 0; }
+    .drill-left { border-right: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow-y: auto; }
+    .drill-section { display: flex; flex-direction: column; flex-shrink: 0; border-bottom: 1px solid #1e3a2e; }
+    .drill-sec-header { display: flex; align-items: center; padding: 8px 14px; background: #0a1a12; border-bottom: 1px solid #1e3a2e; flex-shrink: 0; }
+    .drill-sec-title { font-size: 10px; font-weight: bold; color: #4a7a62; letter-spacing: 0.06em; text-transform: uppercase; font-family: 'Courier New', monospace; }
+    .drill-sec-body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; }
     .drill-panel-sub { font-size: 11px; color: #4a7a62; line-height: 1.5; flex-shrink: 0; font-family: 'Courier New', monospace; }
     .drill-word-block { display: flex; flex-direction: column; gap: 5px; }
     .drill-word-tag-row { display: flex; align-items: center; gap: 8px; }
@@ -250,12 +250,12 @@
     .drill-def-area { background: #061210; border: 1px solid #1e3a2e; color: #c8ddd5; font-family: 'Courier New', monospace; font-size: 11px; padding: 7px 9px; resize: none; line-height: 1.5; height: 70px; border-radius: 2px; outline: none; width: 100%; }
     .drill-def-area:focus { border-color: #3a7a5a; }
     .drill-def-area::placeholder { color: #2a5040; }
-    .drill-scenario-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.7; color: #a8ccb8; font-family: 'Courier New', monospace; flex: 1; overflow-y: auto; min-height: 0; }
+    .drill-scenario-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.7; color: #a8ccb8; font-family: 'Courier New', monospace; }
     .drill-scenario-box em { color: #6aad88; font-style: normal; font-weight: bold; }
     .drill-fcad-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
     .drill-chip { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 5px 9px; font-size: 11px; color: #6aad88; font-family: 'Courier New', monospace; display: flex; align-items: center; gap: 5px; }
     .drill-chip-letter { font-size: 13px; font-weight: bold; color: #4a8a6a; }
-    .drill-response-area { background: #061210; border: 1px solid #1e3a2e; color: #c8ddd5; font-family: 'Courier New', monospace; font-size: 11px; padding: 9px; resize: none; line-height: 1.6; flex: 1; min-height: 0; border-radius: 2px; outline: none; width: 100%; }
+    .drill-response-area { background: #061210; border: 1px solid #1e3a2e; color: #c8ddd5; font-family: 'Courier New', monospace; font-size: 11px; padding: 9px; resize: vertical; line-height: 1.6; min-height: 180px; border-radius: 2px; outline: none; width: 100%; }
     .drill-response-area:focus { border-color: #3a7a5a; }
     .drill-response-area::placeholder { color: #2a5040; font-size: 11px; }
     .drill-right { display: flex; flex-direction: column; overflow: hidden; position: relative; }
@@ -270,7 +270,7 @@
     .drill-btn-generate:hover { background: #3a7a58; }
     .drill-error-msg { font-size: 11px; color: #f87171; font-family: 'Courier New', monospace; }
     /* ── READING DRILL OVERLAY ── */
-    .drill-passage-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.9; color: #a8ccb8; font-family: 'Courier New', monospace; flex: 1; overflow-y: auto; min-height: 0; }
+    .drill-passage-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.9; color: #a8ccb8; font-family: 'Courier New', monospace; }
     .drill-passage-box .s { color: #3a6a52; font-size: 10px; margin-right: 0.35rem; font-family: 'Courier New', monospace; }
     .drill-badge-grammar { display: inline-block; background: #1a1a3a; border: 1px solid #3a3a7a; border-radius: 2px; padding: 1px 6px; font-size: 10px; color: #7a7ac8; font-family: 'Courier New', monospace; }
     .drill-badge-logic { display: inline-block; background: #2a1a08; border: 1px solid #6a3a10; border-radius: 2px; padding: 1px 6px; font-size: 10px; color: #c07838; font-family: 'Courier New', monospace; }
@@ -377,18 +377,18 @@
     <div class="drill-top-bar">
       <button class="drill-home-btn" onclick="show('stage-welcome')">← Home</button>
       <div class="drill-tabs">
-        <button class="drill-tab active" id="drill-tab-vocab"    onclick="switchDrillTab('vocab')">① Vocabulary</button>
-        <button class="drill-tab"        id="drill-tab-scenario" onclick="switchDrillTab('scenario')">② Scenario</button>
-        <button class="drill-tab"        id="drill-tab-response" onclick="switchDrillTab('response')">③ Response</button>
+        <button class="drill-tab active" data-drill="vocab"    onclick="switchToDrill('vocab')">Vocabulary &amp; Writing</button>
+        <button class="drill-tab"        data-drill="reading"  onclick="switchToDrill('reading')">Reading &amp; Editing</button>
+        <button class="drill-tab"        data-drill="vm47"     onclick="switchToDrill('vm47')">VM47 Eligibility</button>
+        <button class="drill-tab"        data-drill="iso"      onclick="switchToDrill('iso')">Isometric</button>
       </div>
     </div>
     <div class="drill-main">
       <div class="drill-left">
 
-        <div class="drill-section expanded" id="drill-sec-vocab">
-          <div class="drill-sec-header" onclick="toggleDrillSection('vocab')">
+        <div class="drill-section">
+          <div class="drill-sec-header">
             <span class="drill-sec-title">① Vocabulary — Define each word</span>
-            <span class="drill-chevron">▲</span>
           </div>
           <div class="drill-sec-body">
             <div class="drill-panel-sub">Write your own definition before looking anything up.</div>
@@ -396,20 +396,18 @@
           </div>
         </div>
 
-        <div class="drill-section" id="drill-sec-scenario">
-          <div class="drill-sec-header" onclick="toggleDrillSection('scenario')">
+        <div class="drill-section">
+          <div class="drill-sec-header">
             <span class="drill-sec-title">② Writing Scenario</span>
-            <span class="drill-chevron">▼</span>
           </div>
           <div class="drill-sec-body">
             <div class="drill-scenario-box" id="scenario-text"></div>
           </div>
         </div>
 
-        <div class="drill-section" id="drill-sec-response">
-          <div class="drill-sec-header" onclick="toggleDrillSection('response')">
+        <div class="drill-section">
+          <div class="drill-sec-header">
             <span class="drill-sec-title">③ Your Response — 2 paragraphs (FCAD)</span>
-            <span class="drill-chevron">▼</span>
           </div>
           <div class="drill-sec-body">
             <div class="drill-fcad-chips">
@@ -446,46 +444,39 @@
     <div class="drill-top-bar">
       <button class="drill-home-btn" onclick="show('stage-welcome')">← Home</button>
       <div class="drill-tabs">
-        <button class="drill-tab active" id="read-tab-passage" onclick="switchReadingTab('passage')">① Passage</button>
-        <button class="drill-tab"        id="read-tab-grammar" onclick="switchReadingTab('grammar')">② Grammar</button>
-        <button class="drill-tab"        id="read-tab-logic"   onclick="switchReadingTab('logic')">③ Logic</button>
+        <button class="drill-tab"  data-drill="vocab"   onclick="switchToDrill('vocab')">Vocabulary &amp; Writing</button>
+        <button class="drill-tab active" data-drill="reading" onclick="switchToDrill('reading')">Reading &amp; Editing</button>
+        <button class="drill-tab"  data-drill="vm47"    onclick="switchToDrill('vm47')">VM47 Eligibility</button>
+        <button class="drill-tab"  data-drill="iso"     onclick="switchToDrill('iso')">Isometric</button>
       </div>
     </div>
     <div class="drill-main">
       <div class="drill-left">
 
-        <div class="drill-section expanded" id="read-sec-passage">
-          <div class="drill-sec-header" onclick="toggleReadingSection('passage')">
-            <span class="drill-sec-title">① Read this passage carefully</span>
-            <span class="drill-chevron">▲</span>
+        <div class="drill-section">
+          <div class="drill-sec-header">
+            <span class="drill-sec-title">① Read this passage carefully — <span class="drill-badge-grammar">grammar</span> &amp; <span class="drill-badge-logic">logic</span> errors planted</span>
           </div>
           <div class="drill-sec-body">
-            <div class="drill-panel-sub">
-              Contains <span class="drill-badge-grammar">grammar errors</span> and <span class="drill-badge-logic">logical flaws</span>. Sentences are numbered for reference.
-            </div>
             <div class="drill-passage-box" id="passage-text"></div>
           </div>
         </div>
 
-        <div class="drill-section" id="read-sec-grammar">
-          <div class="drill-sec-header" onclick="toggleReadingSection('grammar')">
-            <span class="drill-sec-title">② Grammar Errors <span class="drill-badge-grammar">grammar</span></span>
-            <span class="drill-chevron">▼</span>
+        <div class="drill-section">
+          <div class="drill-sec-header">
+            <span class="drill-sec-title">② Grammar Errors — sentence · what's wrong · correction</span>
           </div>
           <div class="drill-sec-body">
-            <div class="drill-panel-sub">List each one: which sentence, what is wrong, what it should be.</div>
             <textarea id="reading-grammar" class="drill-response-area"
               placeholder="e.g. S3: 'stocks has increased' should be 'stocks have increased' — plural subject needs plural verb"></textarea>
           </div>
         </div>
 
-        <div class="drill-section" id="read-sec-logic">
-          <div class="drill-sec-header" onclick="toggleReadingSection('logic')">
-            <span class="drill-sec-title">③ Logical Flaws <span class="drill-badge-logic">logic</span></span>
-            <span class="drill-chevron">▼</span>
+        <div class="drill-section">
+          <div class="drill-sec-header">
+            <span class="drill-sec-title">③ Logical Flaws — sentence · flaw · why it fails</span>
           </div>
           <div class="drill-sec-body">
-            <div class="drill-panel-sub">List each one: which sentence, what the flaw is, why it doesn't hold.</div>
             <textarea id="reading-logic" class="drill-response-area"
               placeholder="e.g. S5: The conclusion that the project caused the improvement doesn't follow — other factors could explain the trend"></textarea>
           </div>
@@ -510,12 +501,14 @@
 
   <!-- ═══════════════════════════════════════════════════════ VM47 DRILL -->
   <div id="stage-vm47" class="hidden">
-    <div class="assess-header">
-      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
-      <span class="assess-header-icon">🌿</span>
-      <span class="assess-header-title">VM47 Eligibility</span>
-      <span class="assess-header-sep">·</span>
-      <span class="assess-header-sub">VM0047 v1.1 ARR</span>
+    <div class="drill-top-bar">
+      <button class="drill-home-btn" onclick="show('stage-welcome')">← Home</button>
+      <div class="drill-tabs">
+        <button class="drill-tab"  data-drill="vocab"   onclick="switchToDrill('vocab')">Vocabulary &amp; Writing</button>
+        <button class="drill-tab"  data-drill="reading" onclick="switchToDrill('reading')">Reading &amp; Editing</button>
+        <button class="drill-tab active" data-drill="vm47" onclick="switchToDrill('vm47')">VM47 Eligibility</button>
+        <button class="drill-tab"  data-drill="iso"     onclick="switchToDrill('iso')">Isometric</button>
+      </div>
     </div>
     <div class="assess-main">
       <div class="left-col">
@@ -592,12 +585,14 @@
 
   <!-- ══════════════════════════════════════════ ISOMETRIC DRILL -->
   <div id="stage-iso" class="hidden">
-    <div class="assess-header">
-      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
-      <span class="assess-header-icon">🌳</span>
-      <span class="assess-header-title">Isometric Reforestation</span>
-      <span class="assess-header-sep">·</span>
-      <span class="assess-header-sub">Protocol v1.1</span>
+    <div class="drill-top-bar">
+      <button class="drill-home-btn" onclick="show('stage-welcome')">← Home</button>
+      <div class="drill-tabs">
+        <button class="drill-tab"  data-drill="vocab"   onclick="switchToDrill('vocab')">Vocabulary &amp; Writing</button>
+        <button class="drill-tab"  data-drill="reading" onclick="switchToDrill('reading')">Reading &amp; Editing</button>
+        <button class="drill-tab"  data-drill="vm47"    onclick="switchToDrill('vm47')">VM47 Eligibility</button>
+        <button class="drill-tab active" data-drill="iso" onclick="switchToDrill('iso')">Isometric</button>
+      </div>
     </div>
     <div class="assess-main">
       <div class="left-col">
@@ -776,11 +771,15 @@ function togglePanel(prefix, name) {
   });
 }
 
-function switchDrillTab(name) {
-  ['vocab', 'scenario', 'response'].forEach(s => {
-    document.getElementById(`drill-sec-${s}`)?.classList.toggle('expanded', s === name);
-    document.getElementById(`drill-tab-${s}`)?.classList.toggle('active', s === name);
+function updateDrillTabs(activeType) {
+  document.querySelectorAll('.drill-tab[data-drill]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.drill === activeType);
   });
+}
+
+function switchToDrill(type) {
+  const starters = { vocab: startVocabDrill, reading: startReadingDrill, vm47: startVM47Drill, iso: startIsoDrill };
+  starters[type]?.();
 }
 
 // ─── VOCAB DRILL ─────────────────────────────────────────────────────────────
@@ -815,7 +814,7 @@ function startVocabDrill() {
   document.getElementById("word-count").textContent = "0 words";
   const err = document.getElementById("drill-error");
   err.classList.add("hidden"); err.textContent = "";
-  switchDrillTab('vocab');
+  updateDrillTabs('vocab');
   show("stage-drill");
   requestAnimationFrame(() => {
     // Pick a VM47 scenario location that differs from the last one shown
@@ -906,7 +905,7 @@ function startReadingDrill() {
   const err = document.getElementById("reading-error");
   err.classList.add("hidden"); err.textContent = "";
 
-  switchReadingTab('passage');
+  updateDrillTabs('reading');
   show("stage-reading");
   requestAnimationFrame(() => {
     let mapIdx;
@@ -937,13 +936,6 @@ function startReadingDrill() {
       _readingMap.setView([lat, lng], zoom);
       _readingMap.invalidateSize();
     }
-  });
-}
-
-function switchReadingTab(name) {
-  ['passage', 'grammar', 'logic'].forEach(s => {
-    document.getElementById(`read-sec-${s}`)?.classList.toggle('expanded', s === name);
-    document.getElementById(`read-tab-${s}`)?.classList.toggle('active', s === name);
   });
 }
 
@@ -997,6 +989,7 @@ function startVM47Drill() {
     const el = document.getElementById(`vm47-panel-${p}`);
     el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
   });
+  updateDrillTabs('vm47');
   show("stage-vm47");
   requestAnimationFrame(() => {
     const { lat, lng, zoom } = _vm47Session;
@@ -1094,6 +1087,7 @@ function startIsoDrill() {
     const el = document.getElementById(`iso-panel-${p}`);
     el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
   });
+  updateDrillTabs('iso');
   show("stage-iso");
   requestAnimationFrame(() => {
     const { lat, lng, zoom } = _isoSession;
