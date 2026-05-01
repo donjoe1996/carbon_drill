@@ -1149,6 +1149,19 @@ function addMapControls(map) {
 
 const ESA_CLASSES = { 10:'Tree cover',20:'Shrubland',30:'Grassland',40:'Cropland',50:'Built-up',60:'Bare / sparse vegetation',70:'Snow and ice',80:'Permanent water',90:'Herbaceous wetland',95:'Mangroves',100:'Moss and lichen' };
 
+function latLngToTilePixel(lat, lng, z) {
+  const n = Math.pow(2, z);
+  const xFrac = (lng + 180) / 360 * n;
+  const latRad = lat * Math.PI / 180;
+  const yFrac = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n;
+  return {
+    tilecol: Math.floor(xFrac),
+    tilerow: Math.floor(yFrac),
+    i: Math.floor((xFrac - Math.floor(xFrac)) * 256),
+    j: Math.floor((yFrac - Math.floor(yFrac)) * 256)
+  };
+}
+
 function queryPixelInfo(latlng, type, map) {
   const { lat, lng } = latlng;
   const popup = L.popup({ className: 'soil-popup', maxWidth: 300, autoPan: true })
@@ -1229,22 +1242,18 @@ function queryPixelInfo(latlng, type, map) {
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
 
   } else if (type === 'haz') {
-    const size = map.getSize();
-    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
-    const pt = map.latLngToContainerPoint(latlng);
-    const bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+    const z = Math.min(Math.round(map.getZoom()), 13);
+    const { tilecol, tilerow, i, j } = latLngToTilePixel(lat, lng, z);
     const url = `https://data.apps.fao.org/map/wmts/wmts?service=WMTS&version=1.0.0&request=GetFeatureInfo` +
       `&layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857` +
-      `&infoFormat=application/json&i=${Math.round(pt.x)}&j=${Math.round(pt.y)}` +
-      `&width=${size.x}&height=${size.y}&bbox=${bbox}&crs=EPSG:3857&dim_haz-bi-2025=FIRES`;
+      `&infoFormat=application/json&tilematrix=${z}&tilecol=${tilecol}&tilerow=${tilerow}&i=${i}&j=${j}&dim_haz-bi-2025=FIRES`;
     fetch(url).then(r => r.json())
       .then(d => {
-        const f = d.features?.[0]?.properties || d;
-        const val = f.value ?? f.pixel_value ?? f.rasterValue ?? null;
-        if (val === null || val === undefined) {
-          popup.setContent('<div class="soil-pop-loading">No hazard data here</div>'); return;
+        const val = d.features?.[0]?.properties?.value ?? null;
+        if (val === null || val <= -9999) {
+          popup.setContent('<div class="soil-pop-loading">No hazard data at this location</div>'); return;
         }
-        const level = val >= 80 ? 'Very High' : val >= 60 ? 'High' : val >= 40 ? 'Moderate' : val >= 20 ? 'Low' : 'Very Low';
+        const level = val >= 5 ? 'Very High' : val >= 4 ? 'High' : val >= 3 ? 'Moderate' : val >= 2 ? 'Low' : 'Very Low';
         popup.setContent(`
           <div class="soil-pop-head"><div class="soil-pop-label">FAO Climate Hazard — FIRES 2025</div><div class="soil-pop-name">${level}</div></div>
           <div class="soil-pop-rows">
@@ -1254,22 +1263,18 @@ function queryPixelInfo(latlng, type, map) {
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
 
   } else if (type === 'glw') {
-    const size = map.getSize();
-    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
-    const pt = map.latLngToContainerPoint(latlng);
-    const bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+    const z = Math.min(Math.round(map.getZoom()), 13);
+    const { tilecol, tilerow, i, j } = latLngToTilePixel(lat, lng, z);
     const url = `https://data.apps.fao.org/map/wmts/wmts?service=WMTS&version=1.0.0&request=GetFeatureInfo` +
       `&layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857` +
-      `&infoFormat=application/json&i=${Math.round(pt.x)}&j=${Math.round(pt.y)}` +
-      `&width=${size.x}&height=${size.y}&bbox=${bbox}&crs=EPSG:3857&dim_a-species=CTL`;
+      `&infoFormat=application/json&tilematrix=${z}&tilecol=${tilecol}&tilerow=${tilerow}&i=${i}&j=${j}&dim_a-species=CTL`;
     fetch(url).then(r => r.json())
       .then(d => {
-        const f = d.features?.[0]?.properties || d;
-        const val = f.value ?? f.pixel_value ?? f.rasterValue ?? null;
-        if (val === null || val === undefined || val < 0) {
-          popup.setContent('<div class="soil-pop-loading">No livestock data here</div>'); return;
+        const val = d.features?.[0]?.properties?.value ?? null;
+        if (val === null || val <= -9999) {
+          popup.setContent('<div class="soil-pop-loading">No livestock data at this location</div>'); return;
         }
-        const density = parseFloat(val).toFixed(1);
+        const density = val < 0.01 ? '<0.01' : val.toFixed(2);
         popup.setContent(`
           <div class="soil-pop-head"><div class="soil-pop-label">FAO Livestock Density — Cattle</div><div class="soil-pop-name">${density} head/km²</div></div>
           <div class="soil-pop-rows">
