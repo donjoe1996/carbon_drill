@@ -236,11 +236,9 @@
     .drill-tab:hover { color: #6aad88; border-color: #3a6a52; }
     .drill-tab.active { background: #1a3a2a; color: #8ac4a4; border-color: #3a7a5a; }
     .drill-main { flex: 1; display: grid; grid-template-columns: 360px 1fr; overflow: hidden; min-height: 0; }
-    .drill-left { border-right: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow-y: auto; }
-    .drill-section { display: flex; flex-direction: column; flex-shrink: 0; border-bottom: 1px solid #1e3a2e; }
-    .drill-sec-header { display: flex; align-items: center; padding: 8px 14px; background: #0a1a12; border-bottom: 1px solid #1e3a2e; flex-shrink: 0; }
-    .drill-sec-title { font-size: 10px; font-weight: bold; color: #4a7a62; letter-spacing: 0.06em; text-transform: uppercase; font-family: 'Courier New', monospace; }
-    .drill-sec-body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; }
+    .drill-left { border-right: 1px solid #1e3a2e; display: flex; flex-direction: column; overflow: hidden; }
+    /* numbered sentence labels inside reading passage */
+    #passage-text .s { color: var(--text-dim); font-size: 11px; margin-right: 6px; font-family: 'DM Mono', monospace; }
     .drill-panel-sub { font-size: 11px; color: #4a7a62; line-height: 1.5; flex-shrink: 0; font-family: 'Courier New', monospace; }
     .drill-word-block { display: flex; flex-direction: column; gap: 5px; }
     .drill-word-tag-row { display: flex; align-items: center; gap: 8px; }
@@ -384,47 +382,57 @@
       </div>
     </div>
     <div class="drill-main">
-      <div class="drill-left">
+      <div class="left-col" style="width:auto">
 
-        <div class="drill-section">
-          <div class="drill-sec-header">
-            <span class="drill-sec-title">① Vocabulary — Define each word</span>
+        <div class="panel open" id="vocab-drill-panel-vocab">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','vocab',['vocab','scenario','response'])">
+            <div class="panel-num">1</div>
+            <div class="panel-title">Vocabulary — Define each word</div>
+            <div class="panel-chevron">▼</div>
           </div>
-          <div class="drill-sec-body">
-            <div class="drill-panel-sub">Write your own definition before looking anything up.</div>
+          <div class="panel-body">
             <div id="word-inputs"></div>
           </div>
         </div>
 
-        <div class="drill-section">
-          <div class="drill-sec-header">
-            <span class="drill-sec-title">② Writing Scenario</span>
+        <div class="panel closed" id="vocab-drill-panel-scenario">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','scenario',['vocab','scenario','response'])">
+            <div class="panel-num">2</div>
+            <div class="panel-title">Writing Scenario</div>
+            <div class="panel-chevron">▼</div>
           </div>
-          <div class="drill-sec-body">
-            <div class="drill-scenario-box" id="scenario-text"></div>
+          <div class="panel-body">
+            <div class="scenario-text" id="scenario-text"></div>
           </div>
         </div>
 
-        <div class="drill-section">
-          <div class="drill-sec-header">
-            <span class="drill-sec-title">③ Your Response — 2 paragraphs (FCAD)</span>
+        <div class="panel closed" id="vocab-drill-panel-response">
+          <div class="panel-header" onclick="togglePanel('vocab-drill','response',['vocab','scenario','response'])">
+            <div class="panel-num">3</div>
+            <div class="panel-title">Your Response — FCAD (2 paragraphs)</div>
+            <div class="panel-chevron">▼</div>
           </div>
-          <div class="drill-sec-body">
-            <div class="drill-fcad-chips">
-              <div class="drill-chip"><span class="drill-chip-letter">F</span> Focus</div>
-              <div class="drill-chip"><span class="drill-chip-letter">C</span> Context</div>
-              <div class="drill-chip"><span class="drill-chip-letter">A</span> Action</div>
-              <div class="drill-chip"><span class="drill-chip-letter">D</span> Detail</div>
+          <div class="panel-body">
+            <div class="det-section">
+              <div class="det-label">FCAD FRAMEWORK</div>
+              <div class="assess-fcad-row">
+                <span class="assess-fcad-tag">F Focus</span>
+                <span class="assess-fcad-tag">C Context</span>
+                <span class="assess-fcad-tag">A Action</span>
+                <span class="assess-fcad-tag">D Detail</span>
+              </div>
             </div>
-            <textarea id="essay" class="drill-response-area"
-              placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
-              oninput="updateWordCount()"></textarea>
-            <div class="drill-footer">
-              <span class="drill-word-count-label" id="word-count">0 words</span>
-              <div class="drill-btn-row">
-                <div class="drill-error-msg hidden" id="drill-error"></div>
-                <button class="drill-btn-back" onclick="show('stage-welcome')">← Back</button>
-                <button class="drill-btn-generate" onclick="generateVocabOutput()">Generate JSON →</button>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
+              <textarea id="essay" class="det-textarea"
+                placeholder="Paragraph 1 (F + C) — state your focus, provide context…&#10;&#10;Paragraph 2 (A + D) — recommend action, support with detail…"
+                oninput="updateWordCount()"></textarea>
+            </div>
+            <div class="det-footer">
+              <span class="assess-word-count" id="word-count">0 words</span>
+              <div class="footer-btns">
+                <div class="assess-error hidden" id="drill-error"></div>
+                <button class="btn-back" onclick="show('stage-welcome')">← Back</button>
+                <button class="btn-generate" onclick="generateVocabOutput()">Generate JSON →</button>
               </div>
             </div>
           </div>
@@ -451,40 +459,59 @@
       </div>
     </div>
     <div class="drill-main">
-      <div class="drill-left">
+      <div class="left-col" style="width:auto">
 
-        <div class="drill-section">
-          <div class="drill-sec-header">
-            <span class="drill-sec-title">① Read this passage carefully — <span class="drill-badge-grammar">grammar</span> &amp; <span class="drill-badge-logic">logic</span> errors planted</span>
+        <div class="panel open" id="read-drill-panel-passage">
+          <div class="panel-header" onclick="togglePanel('read-drill','passage',['passage','grammar','logic'])">
+            <div class="panel-num">1</div>
+            <div class="panel-title">Read this passage carefully</div>
+            <div class="panel-chevron">▼</div>
           </div>
-          <div class="drill-sec-body">
-            <div class="drill-passage-box" id="passage-text"></div>
+          <div class="panel-body">
+            <div class="conditions-header">
+              <span class="conditions-title"><span class="drill-badge-grammar">grammar</span> &amp; <span class="drill-badge-logic">logic</span> errors planted — sentences numbered</span>
+            </div>
+            <div class="scenario-text" id="passage-text" style="line-height:1.9"></div>
           </div>
         </div>
 
-        <div class="drill-section">
-          <div class="drill-sec-header">
-            <span class="drill-sec-title">② Grammar Errors — sentence · what's wrong · correction</span>
+        <div class="panel closed" id="read-drill-panel-grammar">
+          <div class="panel-header" onclick="togglePanel('read-drill','grammar',['passage','grammar','logic'])">
+            <div class="panel-num">2</div>
+            <div class="panel-title">Grammar Errors</div>
+            <div class="panel-chevron">▼</div>
           </div>
-          <div class="drill-sec-body">
-            <textarea id="reading-grammar" class="drill-response-area"
-              placeholder="e.g. S3: 'stocks has increased' should be 'stocks have increased' — plural subject needs plural verb"></textarea>
+          <div class="panel-body">
+            <div class="det-section">
+              <div class="det-label">SENTENCE · WHAT'S WRONG · CORRECTION</div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
+              <textarea id="reading-grammar" class="det-textarea"
+                placeholder="e.g. S3: 'stocks has increased' should be 'stocks have increased' — plural subject needs plural verb"></textarea>
+            </div>
           </div>
         </div>
 
-        <div class="drill-section">
-          <div class="drill-sec-header">
-            <span class="drill-sec-title">③ Logical Flaws — sentence · flaw · why it fails</span>
+        <div class="panel closed" id="read-drill-panel-logic">
+          <div class="panel-header" onclick="togglePanel('read-drill','logic',['passage','grammar','logic'])">
+            <div class="panel-num">3</div>
+            <div class="panel-title">Logical Flaws</div>
+            <div class="panel-chevron">▼</div>
           </div>
-          <div class="drill-sec-body">
-            <textarea id="reading-logic" class="drill-response-area"
-              placeholder="e.g. S5: The conclusion that the project caused the improvement doesn't follow — other factors could explain the trend"></textarea>
-            <div class="drill-footer">
-              <span class="drill-word-count-label" id="reading-hint">Be specific — quote the text.</span>
-              <div class="drill-btn-row">
-                <div class="drill-error-msg hidden" id="reading-error"></div>
-                <button class="drill-btn-back" onclick="show('stage-welcome')">← Back</button>
-                <button class="drill-btn-generate" onclick="generateReadingOutput()">Generate JSON →</button>
+          <div class="panel-body">
+            <div class="det-section">
+              <div class="det-label">SENTENCE · FLAW · WHY IT FAILS</div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 0">
+              <textarea id="reading-logic" class="det-textarea"
+                placeholder="e.g. S5: The conclusion doesn't follow — other factors could explain the trend"></textarea>
+            </div>
+            <div class="det-footer">
+              <span class="assess-word-count" id="reading-hint">Be specific — quote the text.</span>
+              <div class="footer-btns">
+                <div class="assess-error hidden" id="reading-error"></div>
+                <button class="btn-back" onclick="show('stage-welcome')">← Back</button>
+                <button class="btn-generate" onclick="generateReadingOutput()">Generate JSON →</button>
               </div>
             </div>
           </div>
@@ -759,8 +786,8 @@ function show(id) {
   ALL_STAGES.forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id));
 }
 
-function togglePanel(prefix, name) {
-  ['scenario', 'criteria', 'det'].forEach(p => {
+function togglePanel(prefix, name, panels) {
+  (panels || ['scenario', 'criteria', 'det']).forEach(p => {
     const el = document.getElementById(`${prefix}-panel-${p}`);
     if (!el) return;
     if (p === name && el.classList.contains('closed')) {
@@ -799,13 +826,14 @@ function startVocabDrill() {
   _vocabSession = { words, scenario };
 
   document.getElementById("word-inputs").innerHTML = words.map((w, i) => `
-    <div class="drill-word-block">
-      <div class="drill-word-tag-row">
-        <span class="drill-word-tag">${w.word}</span>
-        <span class="drill-word-num">word_${i + 1}</span>
+    <div class="det-section" style="border-bottom: 1px solid var(--border2);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span class="cond-badge">${i + 1}</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--accent)">${w.word}</span>
       </div>
-      <div class="drill-def-label">// your definition</div>
-      <textarea id="def-${i}" class="drill-def-area" placeholder='Define "${w.word}" in your own words…'></textarea>
+      <div class="det-label">YOUR DEFINITION</div>
+      <textarea id="def-${i}" class="det-textarea" style="min-height:68px"
+        placeholder='Define "${w.word}" in your own words…'></textarea>
     </div>
   `).join("");
 
@@ -814,6 +842,12 @@ function startVocabDrill() {
   document.getElementById("word-count").textContent = "0 words";
   const err = document.getElementById("drill-error");
   err.classList.add("hidden"); err.textContent = "";
+  // reset accordion — vocab open
+  ['vocab', 'scenario', 'response'].forEach((p, i) => {
+    const el = document.getElementById(`vocab-drill-panel-${p}`);
+    if (!el) return;
+    el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
+  });
   updateDrillTabs('vocab');
   show("stage-drill");
   requestAnimationFrame(() => {
@@ -904,7 +938,12 @@ function startReadingDrill() {
   document.getElementById("reading-logic").value = "";
   const err = document.getElementById("reading-error");
   err.classList.add("hidden"); err.textContent = "";
-
+  // reset accordion — passage open
+  ['passage', 'grammar', 'logic'].forEach((p, i) => {
+    const el = document.getElementById(`read-drill-panel-${p}`);
+    if (!el) return;
+    el.classList.toggle('open', i === 0); el.classList.toggle('closed', i !== 0);
+  });
   updateDrillTabs('reading');
   show("stage-reading");
   requestAnimationFrame(() => {
