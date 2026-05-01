@@ -790,9 +790,10 @@ function togglePanel(prefix, name, panels) {
   (panels || ['scenario', 'criteria', 'det']).forEach(p => {
     const el = document.getElementById(`${prefix}-panel-${p}`);
     if (!el) return;
-    if (p === name && el.classList.contains('closed')) {
-      el.classList.add('open'); el.classList.remove('closed');
-    } else if (p !== name) {
+    if (p === name) {
+      const opening = el.classList.contains('closed');
+      el.classList.toggle('open', opening); el.classList.toggle('closed', !opening);
+    } else {
       el.classList.remove('open'); el.classList.add('closed');
     }
   });
