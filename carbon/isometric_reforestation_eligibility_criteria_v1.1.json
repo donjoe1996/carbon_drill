@@ -1,0 +1,85 @@
+{
+  "protocol": {
+    "name": "Isometric Reforestation Protocol",
+    "version": "1.1",
+    "source_url": "https://registry.isometric.com/protocol/reforestation"
+  },
+  "eligibility_criteria": [
+    {
+      "criterion": "Historically forested land",
+      "section": "§4.1",
+      "page": "varies",
+      "version": "v1.1",
+      "rationale": "Must reforest lands that historically supported forest ecosystems, with robust evidence",
+      "plain_english": "The land must have been a forest in the past, proven through data, imagery, or scientific analysis",
+      "status": "REQUIRED"
+    },
+    {
+      "criterion": "Not recently deforested (≥10 years)",
+      "section": "§4.1",
+      "page": "varies",
+      "version": "v1.1",
+      "rationale": "Must not reforest lands where deforestation occurred within 10 years prior to start (exceptions for natural disasters/common practice)",
+      "plain_english": "The land cannot have been deliberately cleared in the last decade before planting begins",
+      "status": "REQUIRED"
+    },
+    {
+      "criterion": "Not wetlands/peatlands",
+      "section": "§4.1, §4.1.1",
+      "page": "varies",
+      "version": "v1.1",
+      "rationale": "Must not occur on terrestrial or tidal wetlands (peatlands, marshes, mangroves)",
+      "plain_english": "Cannot plant on water-logged soils or swampy areas",
+      "status": "REQUIRED"
+    },
+    {
+      "criterion": "No net warming from albedo",
+      "section": "§4.1, Appendix B",
+      "page": "varies",
+      "version": "v1.1",
+      "rationale": "Must not be in regions where albedo changes cause net warming (Hasler et al. 2024 data)",
+      "plain_english": "Tree cover cannot make local climate warmer by changing how sunlight reflects off the land",
+      "status": "REQUIRED"
+    },
+    {
+      "criterion": "Additionality demonstrated",
+      "section": "§7.4, §9.4",
+      "page": "varies",
+      "version": "v1.1",
+      "rationale": "Must prove activities wouldn't occur without carbon finance via dynamic baselining",
+      "plain_english": "Must show trees wouldn't have grown naturally or through normal practices without carbon credits",
+      "status": "REQUIRED"
+    },
+    {
+      "criterion": "Currently degraded or non-forested",
+      "section": "§4.1",
+      "page": "varies",
+      "version": "v1.1",
+      "rationale": "Must be degraded lands holding less than expected mature biomass OR not meeting forest definition",
+      "plain_english": "Land must currently be in poor condition compared to what a healthy forest would be",
+      "status": "REQUIRED"
+    }
+  ],
+  "errors_in_original_list": [
+    {
+      "criterion": "Not high-carbon stock (HCS) land",
+      "status": "NOT FOUND",
+      "note": "This criterion does not appear in v1.1 protocol"
+    },
+    {
+      "criterion": "No prior ARR project registration",
+      "status": "NOT FOUND",
+      "note": "This criterion is not explicitly stated in v1.1"
+    },
+    {
+      "criterion": "Non-forested at project start date",
+      "status": "PARTIALLY CORRECT",
+      "note": "Must be degraded/non-forested NOW but must have been historically forested"
+    }
+  ],
+  "metadata": {
+    "analysis_date": "2026-04-30",
+    "protocol_certification_status": "CCP Approved",
+    "notes": "This analysis is based on the publicly available v1.1 protocol document. Some page numbers are listed as 'varies' because the web version does not provide explicit page numbers for all sections."
+  }
+}
