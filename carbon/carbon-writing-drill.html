@@ -911,6 +911,25 @@ const MAP_LEGENDS = {
       <img class="mleg-img" src="https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png" alt="WRB legend">
       <span class="mleg-note" style="display:block;margin-top:6px">© ISRIC — World Soil Information</span>
     </div>`
+  },
+  ecoregions: {
+    meta: { name: 'RESOLVE Ecoregions 2017', type: 'XYZ Tile', url: 'https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}' },
+    legend: `<div class="mleg-legend-wrap"><div class="mleg-grid">
+      <div class="mleg-row"><span class="mleg-dot" style="background:#5d8233"></span>Trop. Moist Broadleaf Forest</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#cc6600"></span>Trop. Dry Broadleaf Forest</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#a8c63e"></span>Trop. Coniferous Forest</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#85aa4c"></span>Temp. Broadleaf Forest</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#386a1f"></span>Temp. Conifer Forest</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#007777"></span>Boreal Forest / Taiga</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#d4bc6a"></span>Trop. Grasslands & Savanna</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#c8be55"></span>Temp. Grasslands & Savanna</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#6bb3c5"></span>Flooded Grasslands</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#bdb3c4"></span>Montane Grasslands</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#b5d6f5"></span>Tundra</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#e8d36f"></span>Mediterranean Scrub</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#e5d3a3"></span>Deserts & Xeric Shrublands</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#3b7b5e"></span>Mangroves</div>
+    </div><span class="mleg-note" style="display:block;margin-top:6px">© RESOLVE / UNEP-WCMC — 846 ecoregions, 14 biomes</span></div>`
   }
 };
 
@@ -923,10 +942,11 @@ function renderLegend(key) {
   </div>${legend}`;
 }
 
-function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, panelId) {
+function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId) {
+  const overlays = [esaLayer, wrbLayer, ecoLayer];
   map.on('layeradd', function(e) {
-    if (e.layer === esaLayer && map.hasLayer(wrbLayer)) map.removeLayer(wrbLayer);
-    if (e.layer === wrbLayer && map.hasLayer(esaLayer)) map.removeLayer(esaLayer);
+    if (overlays.includes(e.layer))
+      overlays.forEach(ol => { if (ol !== e.layer && map.hasLayer(ol)) map.removeLayer(ol); });
   });
   let initialized = false;
   function render() {
@@ -934,6 +954,7 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, panelId
     if (!el) return;
     if (map.hasLayer(wrbLayer))          el.innerHTML = renderLegend('wrb');
     else if (map.hasLayer(esaLayer))     el.innerHTML = renderLegend('esa');
+    else if (map.hasLayer(ecoLayer))     el.innerHTML = renderLegend('ecoregions');
     else if (map.hasLayer(terrainLayer)) el.innerHTML = renderLegend('terrain');
     else                                 el.innerHTML = renderLegend('satellite');
     if (initialized && panelId) {
@@ -1068,12 +1089,15 @@ function startVocabDrill() {
         layers: "MostProbable", format: "image/png", transparent: true,
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
+      const drillEco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
+      });
       L.control.layers(
         { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
-        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb },
+        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, "vocab-drill-panel-legend");
+      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend");
       addMapControls(_drillMap);
       addSoilClickHandler(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
@@ -1174,12 +1198,15 @@ function startReadingDrill() {
         layers: "MostProbable", format: "image/png", transparent: true,
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
+      const readEco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
+      });
       L.control.layers(
         { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
-        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb },
+        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, "read-drill-panel-legend");
+      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend");
       addMapControls(_readingMap);
       addSoilClickHandler(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
@@ -1265,12 +1292,15 @@ function startVM47Drill() {
         layers: "MostProbable", format: "image/png", transparent: true,
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
+      const vm47Eco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
+      });
       L.control.layers(
         { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
-        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb },
+        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, "vm47-panel-legend");
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend");
       addMapControls(_vm47Map);
       addSoilClickHandler(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
@@ -1374,12 +1404,15 @@ function startIsoDrill() {
         layers: "MostProbable", format: "image/png", transparent: true,
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
+      const isoEco = L.tileLayer("https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, opacity: 0.85, attribution: "© RESOLVE / UNEP-WCMC",
+      });
       L.control.layers(
         { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
-        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb },
+        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, "iso-panel-legend");
+      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend");
       addMapControls(_isoMap);
       addSoilClickHandler(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
