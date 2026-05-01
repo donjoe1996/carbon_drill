@@ -238,6 +238,22 @@
     .map-ctx-item:hover { background: var(--panel); color: var(--text); }
     .map-ctx-item .ctx-icon { font-size: 14px; }
     .map-ctx-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); margin-left: auto; }
+    /* ── LOCATION SEARCH ── */
+    .loc-search-wrap { flex-shrink: 0; padding: 10px 12px 8px; background: var(--surface); border-bottom: 1px solid var(--border2); position: relative; }
+    .loc-search-box { display: flex; align-items: center; gap: 8px; background: #0d1f17; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 10px; transition: border-color 0.15s; }
+    .loc-search-box:focus-within { border-color: var(--green-lt); }
+    .loc-search-icon { color: var(--text-mut); font-size: 14px; flex-shrink: 0; line-height: 1; }
+    .loc-search-input { flex: 1; background: none; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text); }
+    .loc-search-input::placeholder { color: var(--text-mut); }
+    .loc-search-clear { background: none; border: none; color: var(--text-mut); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; display: none; }
+    .loc-search-clear.visible { display: block; }
+    .loc-search-results { position: absolute; left: 12px; right: 12px; top: calc(100% - 2px); background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; z-index: 1000; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+    .loc-result-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border2); }
+    .loc-result-item:last-child { border-bottom: none; }
+    .loc-result-item:hover { background: var(--panel); }
+    .loc-result-name { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text); }
+    .loc-result-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); }
+    .loc-search-status { padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); }
     /* ── LOGIN OVERLAY ── */
     #stage-login { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     #stage-login.hidden { display: none; }
@@ -426,6 +442,14 @@
     </div>
     <div class="drill-main">
       <div class="left-col" style="width:auto">
+        <div class="loc-search-wrap">
+          <div class="loc-search-box">
+            <span class="loc-search-icon">⌕</span>
+            <input class="loc-search-input" id="drill-loc-input" type="text" placeholder="Search for locations…" autocomplete="off">
+            <button class="loc-search-clear" id="drill-loc-clear" title="Clear">✕</button>
+          </div>
+          <div class="loc-search-results hidden" id="drill-loc-results"></div>
+        </div>
 
         <div class="panel open" id="vocab-drill-panel-vocab">
           <div class="panel-header" onclick="togglePanel('vocab-drill','vocab',['vocab','scenario','response','legend'])">
@@ -514,6 +538,14 @@
     </div>
     <div class="drill-main">
       <div class="left-col" style="width:auto">
+        <div class="loc-search-wrap">
+          <div class="loc-search-box">
+            <span class="loc-search-icon">⌕</span>
+            <input class="loc-search-input" id="read-loc-input" type="text" placeholder="Search for locations…" autocomplete="off">
+            <button class="loc-search-clear" id="read-loc-clear" title="Clear">✕</button>
+          </div>
+          <div class="loc-search-results hidden" id="read-loc-results"></div>
+        </div>
 
         <div class="panel open" id="read-drill-panel-passage">
           <div class="panel-header" onclick="togglePanel('read-drill','passage',['passage','grammar','logic','legend'])">
@@ -604,6 +636,14 @@
     </div>
     <div class="assess-main">
       <div class="left-col">
+        <div class="loc-search-wrap">
+          <div class="loc-search-box">
+            <span class="loc-search-icon">⌕</span>
+            <input class="loc-search-input" id="vm47-loc-input" type="text" placeholder="Search for locations…" autocomplete="off">
+            <button class="loc-search-clear" id="vm47-loc-clear" title="Clear">✕</button>
+          </div>
+          <div class="loc-search-results hidden" id="vm47-loc-results"></div>
+        </div>
 
         <div class="panel open" id="vm47-panel-scenario">
           <div class="panel-header" onclick="togglePanel('vm47','scenario')">
@@ -699,8 +739,17 @@
     </div>
     <div class="assess-main">
       <div class="left-col">
+        <div class="loc-search-wrap">
+          <div class="loc-search-box">
+            <span class="loc-search-icon">⌕</span>
+            <input class="loc-search-input" id="iso-loc-input" type="text" placeholder="Search for locations…" autocomplete="off">
+            <button class="loc-search-clear" id="iso-loc-clear" title="Clear">✕</button>
+          </div>
+          <div class="loc-search-results hidden" id="iso-loc-results"></div>
+        </div>
 
         <div class="panel open" id="iso-panel-scenario">
+
           <div class="panel-header" onclick="togglePanel('iso','scenario')">
             <div class="panel-num">1</div>
             <div class="panel-title">Land Scenario</div>
@@ -997,6 +1046,88 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLaye
   }
   map.on('layeradd layerremove', render);
   render();
+}
+
+function setupLocSearch(inputId, clearId, resultsId, mapGetter) {
+  const input = document.getElementById(inputId);
+  const clearBtn = document.getElementById(clearId);
+  const results = document.getElementById(resultsId);
+  if (!input) return;
+
+  let debounce = null;
+
+  function hide() { results.classList.add('hidden'); results.innerHTML = ''; }
+  function show() { results.classList.remove('hidden'); }
+
+  function flyTo(lat, lon, zoom) {
+    const map = mapGetter();
+    if (!map) return;
+    map.flyTo([parseFloat(lat), parseFloat(lon)], zoom || 10, { duration: 1.2 });
+    hide();
+    input.blur();
+  }
+
+  function renderResults(items) {
+    results.innerHTML = '';
+    if (!items.length) {
+      results.innerHTML = '<div class="loc-search-status">No results found</div>';
+      show(); return;
+    }
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'loc-result-item';
+      const parts = item.display_name.split(', ');
+      const name = parts.slice(0, 2).join(', ');
+      const sub = parts.slice(2).join(', ');
+      el.innerHTML = `<span class="loc-result-name">${name}</span>${sub ? `<span class="loc-result-sub">${sub}</span>` : ''}`;
+      el.addEventListener('click', () => {
+        input.value = name;
+        clearBtn.classList.add('visible');
+        flyTo(item.lat, item.lon, item.type === 'country' ? 5 : item.type === 'city' ? 11 : 9);
+      });
+      results.appendChild(el);
+    });
+    show();
+  }
+
+  function search(q) {
+    if (q.length < 2) { hide(); return; }
+    results.innerHTML = '<div class="loc-search-status">Searching…</div>';
+    show();
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=0`, {
+      headers: { 'Accept-Language': 'en', 'User-Agent': 'CarbonDrill/1.0' }
+    })
+      .then(r => r.json())
+      .then(renderResults)
+      .catch(() => { results.innerHTML = '<div class="loc-search-status">Search unavailable</div>'; show(); });
+  }
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearBtn.classList.toggle('visible', q.length > 0);
+    clearTimeout(debounce);
+    debounce = setTimeout(() => search(q), 380);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      clearTimeout(debounce);
+      const first = results.querySelector('.loc-result-item');
+      if (first) { first.click(); return; }
+      search(input.value.trim());
+    }
+    if (e.key === 'Escape') { hide(); input.blur(); }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = ''; hide();
+    clearBtn.classList.remove('visible');
+    input.focus();
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.closest('.loc-search-wrap').contains(e.target)) hide();
+  });
 }
 
 const ZoomDisplay = L.Control.extend({
@@ -1788,6 +1919,12 @@ function copyJson() {
     flash();
   });
 }
+
+// Wire up location search for all 4 drills — maps are lazy so pass getters
+setupLocSearch('drill-loc-input', 'drill-loc-clear', 'drill-loc-results', () => _drillMap);
+setupLocSearch('read-loc-input',  'read-loc-clear',  'read-loc-results',  () => _readingMap);
+setupLocSearch('vm47-loc-input',  'vm47-loc-clear',  'vm47-loc-results',  () => _vm47Map);
+setupLocSearch('iso-loc-input',   'iso-loc-clear',   'iso-loc-results',   () => _isoMap);
 </script>
 </body>
 </html>
