@@ -210,6 +210,21 @@
     .leaflet-control-layers-expanded { padding: 6px 10px 8px !important; }
     .leaflet-control-layers label { color: var(--text-dim) !important; font-family: 'DM Sans', sans-serif !important; font-size: 12px !important; cursor: pointer; }
     .leaflet-control-layers-separator { border-color: var(--border) !important; }
+    /* ── SOIL INFO POPUP ── */
+    .soil-popup .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.5); padding: 0; }
+    .soil-popup .leaflet-popup-content { margin: 0; min-width: 180px; }
+    .soil-popup .leaflet-popup-tip { background: var(--surface); }
+    .soil-popup .leaflet-popup-close-button { color: var(--text-dim) !important; top: 6px !important; right: 8px !important; font-size: 16px !important; }
+    .soil-pop-head { padding: 8px 28px 6px 12px; border-bottom: 1px solid var(--border2); }
+    .soil-pop-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .08em; color: var(--text-mut); text-transform: uppercase; margin-bottom: 2px; }
+    .soil-pop-name { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); }
+    .soil-pop-rows { padding: 6px 12px 8px; }
+    .soil-pop-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text-dim); }
+    .soil-pop-bar-wrap { flex: 1; height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+    .soil-pop-bar { height: 100%; background: var(--green); border-radius: 2px; }
+    .soil-pop-pct { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); min-width: 28px; text-align: right; }
+    .soil-pop-coord { padding: 0 12px 6px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); }
+    .soil-pop-loading { padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); }
     /* ── LOGIN OVERLAY ── */
     #stage-login { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     #stage-login.hidden { display: none; }
@@ -892,6 +907,36 @@ function setupMapLegend(map, legendId, esaLayer, wrbLayer, panelId) {
   render();
 }
 
+function addSoilClickHandler(map) {
+  map.on('click', function(e) {
+    const { lat, lng } = e.latlng;
+    const popup = L.popup({ className: 'soil-popup', maxWidth: 260, autoPan: true })
+      .setLatLng(e.latlng)
+      .setContent('<div class="soil-pop-loading">Querying soil data…</div>')
+      .openOn(map);
+    fetch(`https://rest.isric.org/soilgrids/v2.0/classification/query?lon=${lng.toFixed(5)}&lat=${lat.toFixed(5)}&number_classes=3`)
+      .then(r => r.json())
+      .then(d => {
+        const top = d.wrb_class_name || '—';
+        const probs = d.wrb_class_probability || [];
+        const rows = probs.map(([name, pct]) => `
+          <div class="soil-pop-row">
+            <span style="min-width:80px">${name}</span>
+            <div class="soil-pop-bar-wrap"><div class="soil-pop-bar" style="width:${pct}%"></div></div>
+            <span class="soil-pop-pct">${pct}%</span>
+          </div>`).join('');
+        popup.setContent(`
+          <div class="soil-pop-head">
+            <div class="soil-pop-label">WRB Most Probable Soil Group</div>
+            <div class="soil-pop-name">${top}</div>
+          </div>
+          <div class="soil-pop-rows">${rows}</div>
+          <div class="soil-pop-coord">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+  });
+}
+
 function updateDrillTabs(activeType) {
   document.querySelectorAll('.drill-tab[data-drill]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.drill === activeType);
@@ -970,6 +1015,7 @@ function startVocabDrill() {
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
       setupMapLegend(_drillMap, "drill-map-legend", drillEsa, drillWrb, "vocab-drill-panel-legend");
+      addSoilClickHandler(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1071,6 +1117,7 @@ function startReadingDrill() {
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
       setupMapLegend(_readingMap, "reading-map-legend", readEsa, readWrb, "read-drill-panel-legend");
+      addSoilClickHandler(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1157,6 +1204,7 @@ function startVM47Drill() {
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
       setupMapLegend(_vm47Map, "vm47-map-legend", vm47Esa, vm47Wrb, "vm47-panel-legend");
+      addSoilClickHandler(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1261,6 +1309,7 @@ function startIsoDrill() {
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
       setupMapLegend(_isoMap, "iso-map-legend", isoEsa, isoWrb, "iso-panel-legend");
+      addSoilClickHandler(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
