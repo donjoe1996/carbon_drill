@@ -1559,8 +1559,11 @@ const _BIOME_DL = JSON.stringify([{
   }
 }]);
 
+// ArcGIS export URL length limit (~2000 chars) is exceeded by 14 biomes — use POST
 const BiomeTileLayer = L.TileLayer.extend({
-  getTileUrl(coords) {
+  createTile(coords, done) {
+    const img = document.createElement('img');
+    img.alt = '';
     const { x, y, z } = coords;
     const n = Math.pow(2, z);
     const halfEarth = 20037508.3427892;
@@ -1568,9 +1571,23 @@ const BiomeTileLayer = L.TileLayer.extend({
     const xmin = -halfEarth + x * tileM;
     const ymax =  halfEarth - y * tileM;
     const bbox = `${xmin.toFixed(2)},${(ymax - tileM).toFixed(2)},${(xmin + tileM).toFixed(2)},${ymax.toFixed(2)}`;
-    return `https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/export` +
-      `?bbox=${encodeURIComponent(bbox)}&bboxSR=3857&imageSR=3857&size=256,256` +
-      `&format=png32&transparent=true&f=image&dynamicLayers=${encodeURIComponent(_BIOME_DL)}`;
+    const body = new URLSearchParams({
+      bbox, bboxSR: '3857', imageSR: '3857', size: '256,256',
+      format: 'png32', transparent: 'true', f: 'image',
+      dynamicLayers: _BIOME_DL
+    });
+    fetch('https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    })
+    .then(r => r.blob())
+    .then(blob => {
+      img.onload = () => done(null, img);
+      img.src = URL.createObjectURL(blob);
+    })
+    .catch(() => done('biome tile failed', img));
+    return img;
   }
 });
 
