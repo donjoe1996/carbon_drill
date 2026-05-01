@@ -289,6 +289,12 @@
     .mleg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
     .mleg-row { display: flex; align-items: center; gap: 6px; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text-dim); white-space: nowrap; }
     .mleg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
+    .mleg-meta { border-bottom: 1px solid var(--border2); padding: 10px 16px 8px; margin-bottom: 0; }
+    .mleg-meta-name { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .mleg-meta-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .mleg-meta-type { font-family: 'DM Mono', monospace; font-size: 9px; background: var(--badge-bg); color: var(--badge-fg); border-radius: 3px; padding: 1px 5px; text-transform: uppercase; letter-spacing: .05em; }
+    .mleg-meta-url { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); word-break: break-all; line-height: 1.5; cursor: text; user-select: all; }
+    .mleg-legend-wrap { padding: 10px 16px 8px; }
     .mleg-note { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); }
     .mleg-img { max-width: 100%; display: block; margin-top: 6px; border-radius: 3px; }
     /* ── READING DRILL OVERLAY ── */
@@ -870,33 +876,61 @@ function togglePanel(prefix, name, panels) {
 // ─── MAP LEGEND ──────────────────────────────────────────────────────────────
 
 const MAP_LEGENDS = {
-  satellite: '<span class="mleg-note">🛰 Google Satellite — no thematic legend</span>',
-  esa: `<div class="mleg-title">ESA WorldCover 2021</div><div class="mleg-grid">
-    <div class="mleg-row"><span class="mleg-dot" style="background:#006400"></span>Tree cover</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#ffbb22"></span>Shrubland</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#ffff4c"></span>Grassland</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#f096ff"></span>Cropland</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#fa0000"></span>Built-up</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#b4b4b4"></span>Barren / sparse veg.</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#f0f0f0"></span>Snow and ice</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#0064c8"></span>Permanent water</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#0096a0"></span>Herbaceous wetland</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#00cf75"></span>Mangroves</div>
-    <div class="mleg-row"><span class="mleg-dot" style="background:#fae6a0"></span>Moss and lichen</div>
-  </div>`,
-  wrb: `<div class="mleg-title">WRB Soil Groups — most probable class</div>
-    <img class="mleg-img" src="https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png" alt="WRB legend">
-    <span class="mleg-note" style="display:block;margin-top:4px">© ISRIC — World Soil Information</span>`,
+  satellite: {
+    meta: { name: 'Google Maps Satellite', type: 'XYZ Tile', url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}' },
+    legend: '<div class="mleg-legend-wrap"><span class="mleg-note">No thematic classification — true-colour satellite imagery</span></div>'
+  },
+  terrain: {
+    meta: { name: 'Esri World Terrain Base', type: 'XYZ Tile', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}' },
+    legend: '<div class="mleg-legend-wrap"><span class="mleg-note">No thematic classification — terrain hillshade & contours</span></div>'
+  },
+  esa: {
+    meta: { name: 'ESA WorldCover 2021 v200', type: 'WMTS', url: 'https://services.terrascope.be/wmts/v2' },
+    legend: `<div class="mleg-legend-wrap"><div class="mleg-grid">
+      <div class="mleg-row"><span class="mleg-dot" style="background:#006400"></span>Tree cover</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#ffbb22"></span>Shrubland</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#ffff4c"></span>Grassland</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#f096ff"></span>Cropland</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#fa0000"></span>Built-up</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#b4b4b4"></span>Barren / sparse veg.</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#f0f0f0"></span>Snow and ice</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#0064c8"></span>Permanent water</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#0096a0"></span>Herbaceous wetland</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#00cf75"></span>Mangroves</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#fae6a0"></span>Moss and lichen</div>
+    </div></div>`
+  },
+  wrb: {
+    meta: { name: 'ISRIC — WRB Most Probable Soil Group', type: 'WMS', url: 'https://maps.isric.org/mapserv?map=/map/wrb.map' },
+    legend: `<div class="mleg-legend-wrap">
+      <img class="mleg-img" src="https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png" alt="WRB legend">
+      <span class="mleg-note" style="display:block;margin-top:6px">© ISRIC — World Soil Information</span>
+    </div>`
+  }
 };
 
-function setupMapLegend(map, legendId, esaLayer, wrbLayer, panelId) {
+function renderLegend(key) {
+  const { meta, legend } = MAP_LEGENDS[key];
+  return `<div class="mleg-meta">
+    <div class="mleg-meta-name">${meta.name}</div>
+    <div class="mleg-meta-row"><span class="mleg-meta-type">${meta.type}</span></div>
+    <div class="mleg-meta-url" title="Copy to use in QGIS">${meta.url}</div>
+  </div>${legend}`;
+}
+
+function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, panelId) {
+  map.on('layeradd', function(e) {
+    if (e.layer === esaLayer && map.hasLayer(wrbLayer)) map.removeLayer(wrbLayer);
+    if (e.layer === wrbLayer && map.hasLayer(esaLayer)) map.removeLayer(esaLayer);
+  });
   let initialized = false;
   function render() {
     const el = document.getElementById(legendId);
     if (!el) return;
-    if (map.hasLayer(wrbLayer))      el.innerHTML = MAP_LEGENDS.wrb;
-    else if (map.hasLayer(esaLayer)) el.innerHTML = MAP_LEGENDS.esa;
-    else                             el.innerHTML = MAP_LEGENDS.satellite;
+    if (map.hasLayer(wrbLayer))          el.innerHTML = renderLegend('wrb');
+    else if (map.hasLayer(esaLayer))     el.innerHTML = renderLegend('esa');
+    else if (map.hasLayer(terrainLayer)) el.innerHTML = renderLegend('terrain');
+    else                                 el.innerHTML = renderLegend('satellite');
     if (initialized && panelId) {
       const panel = document.getElementById(panelId);
       if (panel) { panel.classList.add('open'); panel.classList.remove('closed'); }
@@ -1001,6 +1035,9 @@ function startVocabDrill() {
       const drillSat = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
         subdomains: ["0","1","2","3"], maxZoom: 20,
       }).addTo(_drillMap);
+      const drillTerrain = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, attribution: "© Esri",
+      });
       const drillEsa = L.tileLayer(
         "https://services.terrascope.be/wmts/v2?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=WORLDCOVER_2021_MAP&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=EPSG%3A3857&TILEMATRIX=EPSG%3A3857%3A{z}&TILEROW={y}&TILECOL={x}",
         { maxZoom: 13 }
@@ -1010,11 +1047,11 @@ function startVocabDrill() {
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
       L.control.layers(
-        { "🛰 Satellite": drillSat, "🌿 ESA Land Cover 2021": drillEsa },
-        { "🪨 WRB Soil Groups": drillWrb },
+        { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
+        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", drillEsa, drillWrb, "vocab-drill-panel-legend");
+      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, "vocab-drill-panel-legend");
       addSoilClickHandler(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
@@ -1103,6 +1140,9 @@ function startReadingDrill() {
       const readSat = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
         subdomains: ["0","1","2","3"], maxZoom: 20,
       }).addTo(_readingMap);
+      const readTerrain = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, attribution: "© Esri",
+      });
       const readEsa = L.tileLayer(
         "https://services.terrascope.be/wmts/v2?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=WORLDCOVER_2021_MAP&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=EPSG%3A3857&TILEMATRIX=EPSG%3A3857%3A{z}&TILEROW={y}&TILECOL={x}",
         { maxZoom: 13 }
@@ -1112,11 +1152,11 @@ function startReadingDrill() {
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
       L.control.layers(
-        { "🛰 Satellite": readSat, "🌿 ESA Land Cover 2021": readEsa },
-        { "🪨 WRB Soil Groups": readWrb },
+        { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
+        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", readEsa, readWrb, "read-drill-panel-legend");
+      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, "read-drill-panel-legend");
       addSoilClickHandler(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
@@ -1190,6 +1230,9 @@ function startVM47Drill() {
       const vm47Sat = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
         subdomains: ["0","1","2","3"], maxZoom: 20,
       }).addTo(_vm47Map);
+      const vm47Terrain = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, attribution: "© Esri",
+      });
       const vm47Esa = L.tileLayer(
         "https://services.terrascope.be/wmts/v2?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=WORLDCOVER_2021_MAP&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=EPSG%3A3857&TILEMATRIX=EPSG%3A3857%3A{z}&TILEROW={y}&TILECOL={x}",
         { maxZoom: 13 }
@@ -1199,11 +1242,11 @@ function startVM47Drill() {
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
       L.control.layers(
-        { "🛰 Satellite": vm47Sat, "🌿 ESA Land Cover 2021": vm47Esa },
-        { "🪨 WRB Soil Groups": vm47Wrb },
+        { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
+        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Esa, vm47Wrb, "vm47-panel-legend");
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, "vm47-panel-legend");
       addSoilClickHandler(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
@@ -1295,6 +1338,9 @@ function startIsoDrill() {
       const isoSat = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
         subdomains: ["0","1","2","3"], maxZoom: 20,
       }).addTo(_isoMap);
+      const isoTerrain = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 13, attribution: "© Esri",
+      });
       const isoEsa = L.tileLayer(
         "https://services.terrascope.be/wmts/v2?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=WORLDCOVER_2021_MAP&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=EPSG%3A3857&TILEMATRIX=EPSG%3A3857%3A{z}&TILEROW={y}&TILECOL={x}",
         { maxZoom: 13 }
@@ -1304,11 +1350,11 @@ function startIsoDrill() {
         opacity: 0.7, attribution: "© ISRIC — World Soil Information",
       });
       L.control.layers(
-        { "🛰 Satellite": isoSat, "🌿 ESA Land Cover 2021": isoEsa },
-        { "🪨 WRB Soil Groups": isoWrb },
+        { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
+        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", isoEsa, isoWrb, "iso-panel-legend");
+      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, "iso-panel-legend");
       addSoilClickHandler(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
