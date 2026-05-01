@@ -238,6 +238,13 @@
     .map-ctx-item:hover { background: var(--panel); color: var(--text); }
     .map-ctx-item .ctx-icon { font-size: 14px; }
     .map-ctx-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); margin-left: auto; }
+    /* ── TILE CACHE BAR ── */
+    .tile-cache-bar { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 6px 12px 7px; background: var(--bg); border-top: 1px solid var(--border2); }
+    .tile-cache-icon { font-size: 11px; line-height: 1; }
+    .tile-cache-stat { flex: 1; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); }
+    .tile-cache-hit { color: var(--accent); }
+    .tile-cache-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-mut); font-family: 'DM Mono', monospace; font-size: 9px; padding: 2px 7px; cursor: pointer; line-height: 1.6; transition: border-color 0.15s, color 0.15s; }
+    .tile-cache-btn:hover { border-color: var(--green-lt); color: var(--text); }
     /* ── LOCATION SEARCH ── */
     .loc-search-wrap { flex-shrink: 0; padding: 10px 12px 8px; background: var(--surface); border-bottom: 1px solid var(--border2); position: relative; }
     .loc-search-box { display: flex; align-items: center; gap: 8px; background: #0d1f17; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 10px; transition: border-color 0.15s; }
@@ -516,6 +523,11 @@
           </div>
         </div>
 
+        <div class="tile-cache-bar">
+          <span class="tile-cache-icon">⚡</span>
+          <span class="tile-cache-stat" id="cache-stat-drill">0 tiles cached</span>
+          <button class="tile-cache-btn" onclick="clearTileCache()">Clear</button>
+        </div>
       </div>
       <div class="drill-right">
         <div class="drill-map-area">
@@ -614,6 +626,11 @@
           </div>
         </div>
 
+        <div class="tile-cache-bar">
+          <span class="tile-cache-icon">⚡</span>
+          <span class="tile-cache-stat" id="cache-stat-read">0 tiles cached</span>
+          <button class="tile-cache-btn" onclick="clearTileCache()">Clear</button>
+        </div>
       </div>
       <div class="drill-right">
         <div class="drill-map-area">
@@ -721,6 +738,11 @@
           </div>
         </div>
 
+        <div class="tile-cache-bar">
+          <span class="tile-cache-icon">⚡</span>
+          <span class="tile-cache-stat" id="cache-stat-vm47">0 tiles cached</span>
+          <button class="tile-cache-btn" onclick="clearTileCache()">Clear</button>
+        </div>
       </div>
       <div class="map-col"><div id="vm47-map"></div></div>
     </div>
@@ -825,6 +847,11 @@
           </div>
         </div>
 
+        <div class="tile-cache-bar">
+          <span class="tile-cache-icon">⚡</span>
+          <span class="tile-cache-stat" id="cache-stat-iso">0 tiles cached</span>
+          <button class="tile-cache-btn" onclick="clearTileCache()">Clear</button>
+        </div>
       </div>
       <div class="map-col"><div id="iso-map"></div></div>
     </div>
@@ -864,6 +891,99 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="data.js"></script>
+<script>
+// ── TILE CACHE ENGINE ──────────────────────────────────────────────────────
+(function() {
+  const CACHE_NAME = 'carbon-drill-tiles-v1';
+  const _mem = new Map();   // url → objectURL (session-level, instant lookup)
+  let _hits = 0, _misses = 0;
+
+  function updateStats() {
+    const pct  = _hits + _misses > 0 ? Math.round(_hits / (_hits + _misses) * 100) : 0;
+    const text = _mem.size > 0
+      ? `<span class="tile-cache-hit">${_hits}</span> / ${_hits + _misses} tiles cached (${pct}%)`
+      : '0 tiles cached';
+    document.querySelectorAll('.tile-cache-stat').forEach(el => el.innerHTML = text);
+  }
+
+  // Monkey-patch L.TileLayer so ALL layers (XYZ + WMS + WMTS) are cached
+  const _orig = L.TileLayer.prototype.createTile;
+  L.TileLayer.prototype.createTile = function(coords, done) {
+    const img = L.DomUtil.create('img');
+    img.alt = '';
+    const url = this.getTileUrl(coords);
+
+    // 1. Memory hit — instant
+    if (_mem.has(url)) {
+      _hits++;
+      img.src = _mem.get(url);
+      setTimeout(() => done(null, img), 0);
+      updateStats();
+      return img;
+    }
+
+    (async () => {
+      // 2. Cache API hit — persistent across reloads
+      if ('caches' in window) {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          const cached = await cache.match(url);
+          if (cached) {
+            const blob = await cached.blob();
+            const objUrl = URL.createObjectURL(blob);
+            _mem.set(url, objUrl);
+            _hits++;
+            img.src = objUrl;
+            done(null, img);
+            updateStats();
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // 3. Network fetch with CORS (required to read blob + cache)
+      _misses++;
+      try {
+        const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+        if (res.ok) {
+          const blob = await res.blob();
+          const objUrl = URL.createObjectURL(blob);
+          _mem.set(url, objUrl);
+          img.src = objUrl;
+          done(null, img);
+          // Store in Cache API without blocking the render
+          if ('caches' in window) {
+            caches.open(CACHE_NAME).then(c =>
+              c.put(url, new Response(blob, { headers: { 'Content-Type': blob.type } }))
+            ).catch(() => {});
+          }
+          updateStats();
+          return;
+        }
+      } catch (_) {}
+
+      // 4. CORS blocked (e.g. Google Satellite) — load normally, no cache
+      img.onload  = () => { done(null, img); updateStats(); };
+      img.onerror = e  =>   done(e, img);
+      img.src = url;
+    })();
+
+    return img;
+  };
+
+  // Clear both layers
+  window.clearTileCache = async function() {
+    _mem.forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+    _mem.clear();
+    _hits = 0; _misses = 0;
+    if ('caches' in window) {
+      try { await caches.delete(CACHE_NAME); } catch(_) {}
+    }
+    updateStats();
+  };
+})();
+// ──────────────────────────────────────────────────────────────────────────
+</script>
 <script>
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
