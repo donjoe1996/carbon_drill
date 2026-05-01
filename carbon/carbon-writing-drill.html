@@ -1320,22 +1320,55 @@ function queryPixelInfo(latlng, type, map) {
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
 
   } else if (type === 'esa') {
-    const size = map.getSize();
-    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
-    const pt = map.latLngToContainerPoint(latlng);
-    const url = `https://services.terrascope.be/wms/v2?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo` +
-      `&LAYERS=WORLDCOVER_2021_MAP&STYLES=&QUERY_LAYERS=WORLDCOVER_2021_MAP&INFO_FORMAT=text/plain` +
-      `&WIDTH=${size.x}&HEIGHT=${size.y}&BBOX=${sw.lng},${sw.lat},${ne.lng},${ne.lat}` +
-      `&SRS=EPSG:4326&X=${Math.round(pt.x)}&Y=${Math.round(pt.y)}`;
-    fetch(url).then(r => r.text())
-      .then(text => {
-        const match = text.match(/value[_\s]*[=:]\s*["']?(\d+)/i);
-        const val = match ? parseInt(match[1]) : null;
-        const cls = val !== null ? (ESA_CLASSES[val] || `Class ${val}`) : null;
-        if (!cls) { popup.setContent('<div class="soil-pop-loading">No land cover data here</div>'); return; }
+    // GetFeatureInfo not supported by Terrascope GWC — read pixel from tile via canvas
+    const ESA_PALETTE = [
+      { cls: 10,  name: 'Tree cover',           r: 0,   g: 100, b: 0   },
+      { cls: 20,  name: 'Shrubland',            r: 255, g: 187, b: 34  },
+      { cls: 30,  name: 'Grassland',            r: 255, g: 255, b: 76  },
+      { cls: 40,  name: 'Cropland',             r: 240, g: 150, b: 255 },
+      { cls: 50,  name: 'Built-up',             r: 250, g: 0,   b: 0   },
+      { cls: 60,  name: 'Bare / sparse veg.',   r: 180, g: 180, b: 180 },
+      { cls: 70,  name: 'Snow and ice',         r: 240, g: 240, b: 240 },
+      { cls: 80,  name: 'Permanent water',      r: 0,   g: 100, b: 200 },
+      { cls: 90,  name: 'Herbaceous wetland',   r: 0,   g: 150, b: 160 },
+      { cls: 95,  name: 'Mangroves',            r: 0,   g: 207, b: 117 },
+      { cls: 100, name: 'Moss and lichen',      r: 250, g: 230, b: 160 },
+    ];
+    const z = Math.min(Math.round(map.getZoom()), 13);
+    const { tilecol, tilerow, i: px, j: py } = latLngToTilePixel(lat, lng, z);
+    const tileUrl = `https://services.terrascope.be/wmts/v2?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
+      `&LAYER=WORLDCOVER_2021_MAP&STYLE=&FORMAT=image/png&TILEMATRIXSET=EPSG:3857` +
+      `&TILEMATRIX=EPSG:3857:${z}&TILEROW=${tilerow}&TILECOL=${tilecol}`;
+    fetch(tileUrl, { mode: 'cors' })
+      .then(r => r.blob())
+      .then(blob => new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = 256;
+            cv.getContext('2d').drawImage(img, 0, 0);
+            const [r, g, b, a] = cv.getContext('2d').getImageData(px, py, 1, 1).data;
+            URL.revokeObjectURL(img.src);
+            res({ r, g, b, a });
+          } catch(e) { rej(e); }
+        };
+        img.onerror = rej;
+        img.src = URL.createObjectURL(blob);
+      }))
+      .then(({ r, g, b, a }) => {
+        if (a < 10) { popup.setContent('<div class="soil-pop-loading">No data at this location</div>'); return; }
+        let best = null, bestD = Infinity;
+        for (const c of ESA_PALETTE) {
+          const d = (r-c.r)**2 + (g-c.g)**2 + (b-c.b)**2;
+          if (d < bestD) { bestD = d; best = c; }
+        }
         popup.setContent(`
-          <div class="soil-pop-head"><div class="soil-pop-label">ESA WorldCover 2021</div><div class="soil-pop-name">${cls}</div></div>
-          <div class="soil-pop-rows"><div class="soil-pop-row"><span style="color:var(--text-mut)">Class value</span><span style="margin-left:auto">${val}</span></div></div>${coord}`);
+          <div class="soil-pop-head"><div class="soil-pop-label">ESA WorldCover 2021</div><div class="soil-pop-name">${best.name}</div></div>
+          <div class="soil-pop-rows">
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Class</span><span style="margin-left:auto">${best.cls}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Pixel RGB</span><span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:10px">${r},${g},${b}</span></div>
+          </div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
 
