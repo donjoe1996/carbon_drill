@@ -1062,14 +1062,18 @@ function addMapContextMenu(map) {
     <div class="map-ctx-item" data-query="eco"><span class="ctx-icon">🌍</span>Ecoregion<span class="map-ctx-sub">RESOLVE</span></div>
     <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>`;
 
+  // Prevent Leaflet from intercepting any mouse events on the menu
+  L.DomEvent.disableClickPropagation(menu);
+  L.DomEvent.disableScrollPropagation(menu);
+
   let _latlng = null;
   const hide = () => menu.classList.remove('visible');
 
   menu.querySelectorAll('.map-ctx-item').forEach(item => {
-    L.DomEvent.on(item, 'click', function(e) {
-      L.DomEvent.stopPropagation(e);
+    item.addEventListener('click', function() {
+      const type = this.dataset.query;
       hide();
-      if (_latlng) queryPixelInfo(_latlng, this.dataset.query, map);
+      if (_latlng) queryPixelInfo(_latlng, type, map);
     });
   });
 
@@ -1078,12 +1082,12 @@ function addMapContextMenu(map) {
     _latlng = e.latlng;
     const pt = e.containerPoint;
     const cw = container.offsetWidth; const ch = container.offsetHeight;
-    menu.style.left = (pt.x + 200 > cw ? pt.x - 210 : pt.x + 4) + 'px';
-    menu.style.top  = (pt.y + 120 > ch ? pt.y - 130 : pt.y + 4) + 'px';
+    menu.style.left = (pt.x + 214 > cw ? pt.x - 218 : pt.x + 4) + 'px';
+    menu.style.top  = (pt.y + 134 > ch ? pt.y - 138 : pt.y + 4) + 'px';
     menu.classList.add('visible');
   });
 
-  map.on('click mousedown', hide);
+  map.on('click', hide);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
 }
 
