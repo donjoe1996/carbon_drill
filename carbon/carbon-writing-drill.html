@@ -952,6 +952,13 @@ const MAP_LEGENDS = {
       <img class="mleg-img" src="https://data.apps.fao.org/map/wmts/wmts?request=GetLegendGraphic&VERSION=1.0.0&layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&FORMAT=image/png&STRICT=false&service=WMTS" alt="HAZ-BI legend">
       <span class="mleg-note" style="display:block;margin-top:6px">© FAO CRTB — Composite hazard index (FIRES shown). Hazard types: FIRES · FLOOD · FROST · TMAX · SPI · PMAX</span>
     </div>`
+  },
+  glw4: {
+    meta: { name: 'FAO Global Livestock Density 2020 — Cattle (1 km)', type: 'WMTS', url: 'https://data.apps.fao.org/map/wmts/wmts' },
+    legend: `<div class="mleg-legend-wrap">
+      <img class="mleg-img" src="https://data.apps.fao.org/map/wmts/wmts?request=GetLegendGraphic&VERSION=1.0.0&layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&FORMAT=image/png&STRICT=false&service=WMTS" alt="GLW4 legend">
+      <span class="mleg-note" style="display:block;margin-top:6px">© FAO GLW4 2020 — Cattle density shown. Species available: Cattle · Chickens · Sheep · Goats · Pigs · Buffaloes</span>
+    </div>`
   }
 };
 
@@ -964,8 +971,8 @@ function renderLegend(key) {
   </div>${legend}`;
 }
 
-function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer) {
-  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer, hazLayer].filter(Boolean);
+function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer, glwLayer) {
+  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer, hazLayer, glwLayer].filter(Boolean);
   map.on('layeradd', function(e) {
     if (overlays.includes(e.layer))
       overlays.forEach(ol => { if (ol !== e.layer && map.hasLayer(ol)) map.removeLayer(ol); });
@@ -979,6 +986,7 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLaye
     else if (map.hasLayer(ecoLayer))                   el.innerHTML = renderLegend('ecoregions');
     else if (faoLayer && map.hasLayer(faoLayer))       el.innerHTML = renderLegend('fao_aez');
     else if (hazLayer && map.hasLayer(hazLayer))       el.innerHTML = renderLegend('fao_haz');
+    else if (glwLayer && map.hasLayer(glwLayer))       el.innerHTML = renderLegend('glw4');
     else if (map.hasLayer(terrainLayer))               el.innerHTML = renderLegend('terrain');
     else                                               el.innerHTML = renderLegend('satellite');
     if (initialized && panelId) {
@@ -1113,6 +1121,31 @@ function queryPixelInfo(latlng, type, map) {
           </div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+
+  } else if (type === 'glw') {
+    const size = map.getSize();
+    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
+    const pt = map.latLngToContainerPoint(latlng);
+    const bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+    const url = `https://data.apps.fao.org/map/wmts/wmts?service=WMTS&version=1.0.0&request=GetFeatureInfo` +
+      `&layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857` +
+      `&infoFormat=application/json&i=${Math.round(pt.x)}&j=${Math.round(pt.y)}` +
+      `&width=${size.x}&height=${size.y}&bbox=${bbox}&crs=EPSG:3857&dim_a-species=CTL`;
+    fetch(url).then(r => r.json())
+      .then(d => {
+        const f = d.features?.[0]?.properties || d;
+        const val = f.value ?? f.pixel_value ?? f.rasterValue ?? null;
+        if (val === null || val === undefined || val < 0) {
+          popup.setContent('<div class="soil-pop-loading">No livestock data here</div>'); return;
+        }
+        const density = parseFloat(val).toFixed(1);
+        popup.setContent(`
+          <div class="soil-pop-head"><div class="soil-pop-label">FAO Livestock Density — Cattle</div><div class="soil-pop-name">${density} head/km²</div></div>
+          <div class="soil-pop-rows">
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Dataset</span><span style="margin-left:auto">GLW4 2020, 1 km</span></div>
+          </div>${coord}`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
   }
 }
 
@@ -1125,7 +1158,8 @@ function addMapContextMenu(map) {
     <div class="map-ctx-item" data-query="eco"><span class="ctx-icon">🌍</span>Ecoregion<span class="map-ctx-sub">RESOLVE</span></div>
     <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>
     <div class="map-ctx-item" data-query="aez"><span class="ctx-icon">🌾</span>Agro-Eco Zone<span class="map-ctx-sub">FAO GAEZ v4</span></div>
-    <div class="map-ctx-item" data-query="haz"><span class="ctx-icon">🔥</span>Climate Hazard<span class="map-ctx-sub">FAO CRTB 2025</span></div>`;
+    <div class="map-ctx-item" data-query="haz"><span class="ctx-icon">🔥</span>Climate Hazard<span class="map-ctx-sub">FAO CRTB 2025</span></div>
+    <div class="map-ctx-item" data-query="glw"><span class="ctx-icon">🐄</span>Livestock Density<span class="map-ctx-sub">FAO GLW4 2020</span></div>`;
 
   // Prevent Leaflet from intercepting any mouse events on the menu
   L.DomEvent.disableClickPropagation(menu);
@@ -1242,12 +1276,16 @@ function startVocabDrill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
       );
+      const drillGlw = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
+      );
       L.control.layers(
         { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
-        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌾 FAO Agro-Eco Zones": drillFao, "🔥 FAO Climate Hazard 2025": drillHaz },
+        { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌾 FAO Agro-Eco Zones": drillFao, "🔥 FAO Climate Hazard 2025": drillHaz, "🐄 FAO Livestock Density 2020": drillGlw },
         { position: "topright", collapsed: false }
       ).addTo(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao, drillHaz);
+      setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao, drillHaz, drillGlw);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
@@ -1359,12 +1397,16 @@ function startReadingDrill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
       );
+      const readGlw = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
+      );
       L.control.layers(
         { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
-        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌾 FAO Agro-Eco Zones": readFao, "🔥 FAO Climate Hazard 2025": readHaz },
+        { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌾 FAO Agro-Eco Zones": readFao, "🔥 FAO Climate Hazard 2025": readHaz, "🐄 FAO Livestock Density 2020": readGlw },
         { position: "topright", collapsed: false }
       ).addTo(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao, readHaz);
+      setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao, readHaz, readGlw);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
@@ -1461,12 +1503,16 @@ function startVM47Drill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
       );
+      const vm47Glw = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
+      );
       L.control.layers(
         { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
-        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌾 FAO Agro-Eco Zones": vm47Fao, "🔥 FAO Climate Hazard 2025": vm47Haz },
+        { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌾 FAO Agro-Eco Zones": vm47Fao, "🔥 FAO Climate Hazard 2025": vm47Haz, "🐄 FAO Livestock Density 2020": vm47Glw },
         { position: "topright", collapsed: false }
       ).addTo(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao, vm47Haz);
+      setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao, vm47Haz, vm47Glw);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
@@ -1581,12 +1627,16 @@ function startIsoDrill() {
         "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES",
         { maxZoom: 13, opacity: 0.8, attribution: "© FAO CRTB" }
       );
+      const isoGlw = L.tileLayer(
+        "https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL",
+        { maxZoom: 13, opacity: 0.8, attribution: "© FAO GLW4" }
+      );
       L.control.layers(
         { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
-        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌾 FAO Agro-Eco Zones": isoFao, "🔥 FAO Climate Hazard 2025": isoHaz },
+        { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌾 FAO Agro-Eco Zones": isoFao, "🔥 FAO Climate Hazard 2025": isoHaz, "🐄 FAO Livestock Density 2020": isoGlw },
         { position: "topright", collapsed: false }
       ).addTo(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao, isoHaz);
+      setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao, isoHaz, isoGlw);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
