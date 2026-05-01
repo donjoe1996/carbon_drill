@@ -268,7 +268,13 @@
     .drill-btn-generate { background: #2a6a48; border: 1px solid #3a8a60; color: #c8ddd5; padding: 5px 16px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; border-radius: 2px; }
     .drill-btn-generate:hover { background: #3a7a58; }
     .drill-error-msg { font-size: 11px; color: #f87171; font-family: 'Courier New', monospace; }
-    /* Error type badges */
+    /* ── READING DRILL OVERLAY ── */
+    #stage-reading:not(.hidden) { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: #0d1f18; font-family: 'Courier New', monospace; }
+    .drill-passage-box { background: #061210; border: 1px solid #1e3a2e; border-radius: 2px; padding: 12px; font-size: 12px; line-height: 1.9; color: #a8ccb8; font-family: 'Courier New', monospace; }
+    .drill-passage-box .s { color: #3a6a52; font-size: 10px; margin-right: 0.35rem; font-family: 'Courier New', monospace; }
+    .drill-badge-grammar { display: inline-block; background: #1a1a3a; border: 1px solid #3a3a7a; border-radius: 2px; padding: 1px 6px; font-size: 10px; color: #7a7ac8; font-family: 'Courier New', monospace; }
+    .drill-badge-logic { display: inline-block; background: #2a1a08; border: 1px solid #6a3a10; border-radius: 2px; padding: 1px 6px; font-size: 10px; color: #c07838; font-family: 'Courier New', monospace; }
+    /* Error type badges (legacy — reading drill old layout) */
     .badge-grammar { display: inline-block; background: #2a2a4a; border: 1px solid #4a4a8a; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #9090d0; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
     .badge-logic { display: inline-block; background: #3a2010; border: 1px solid #8a5020; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; color: #d09050; font-family: 'Lato', sans-serif; margin-right: 0.3rem; }
   </style>
@@ -433,33 +439,64 @@
 
   <!-- ══════════════════════════════════════════════════ READING DRILL -->
   <div id="stage-reading" class="hidden">
-    <div class="card">
-      <h2>① Read this passage carefully</h2>
-      <p class="dimtext" style="margin-bottom:0.8rem">
-        It contains <span class="badge-grammar">grammar errors</span> and <span class="badge-logic">logical flaws</span>. Sentences are numbered for reference.
-      </p>
-      <div class="passage-box" id="passage-text"></div>
+    <div class="drill-top-bar">
+      <button class="assess-back-btn" onclick="show('stage-welcome')">← Home</button>
+      <span class="drill-top-title">Carbon Drill — Reading &amp; Editing</span>
     </div>
+    <div class="drill-main">
+      <div class="drill-left">
 
-    <div class="card">
-      <h2>② What did you find?</h2>
+        <div class="drill-section expanded" id="read-sec-passage">
+          <div class="drill-sec-header" onclick="toggleReadingSection('passage')">
+            <span class="drill-sec-title">① Read this passage carefully</span>
+            <span class="drill-chevron">▲</span>
+          </div>
+          <div class="drill-sec-body">
+            <div class="drill-panel-sub">
+              Contains <span class="drill-badge-grammar">grammar errors</span> and <span class="drill-badge-logic">logical flaws</span>. Sentences are numbered for reference.
+            </div>
+            <div class="drill-passage-box" id="passage-text"></div>
+          </div>
+        </div>
 
-      <label><span class="badge-grammar">Grammar errors</span> — list each one: which sentence, what is wrong, what it should be</label>
-      <textarea id="reading-grammar" rows="4"
-        placeholder="e.g. S3: 'stocks has increased' should be 'stocks have increased' — plural subject needs plural verb"></textarea>
+        <div class="drill-section" id="read-sec-grammar">
+          <div class="drill-sec-header" onclick="toggleReadingSection('grammar')">
+            <span class="drill-sec-title">② Grammar Errors <span class="drill-badge-grammar">grammar</span></span>
+            <span class="drill-chevron">▼</span>
+          </div>
+          <div class="drill-sec-body">
+            <div class="drill-panel-sub">List each one: which sentence, what is wrong, what it should be.</div>
+            <textarea id="reading-grammar" class="drill-response-area"
+              placeholder="e.g. S3: 'stocks has increased' should be 'stocks have increased' — plural subject needs plural verb"></textarea>
+          </div>
+        </div>
 
-      <label style="margin-top:1.2rem"><span class="badge-logic">Logical flaws</span> — list each one: which sentence, what the flaw is, why it doesn't hold</label>
-      <textarea id="reading-logic" rows="4"
-        placeholder="e.g. S5: The conclusion that the project caused the improvement doesn't follow — other factors (policy changes, economic shifts) could explain the decline"></textarea>
+        <div class="drill-section" id="read-sec-logic">
+          <div class="drill-sec-header" onclick="toggleReadingSection('logic')">
+            <span class="drill-sec-title">③ Logical Flaws <span class="drill-badge-logic">logic</span></span>
+            <span class="drill-chevron">▼</span>
+          </div>
+          <div class="drill-sec-body">
+            <div class="drill-panel-sub">List each one: which sentence, what the flaw is, why it doesn't hold.</div>
+            <textarea id="reading-logic" class="drill-response-area"
+              placeholder="e.g. S5: The conclusion that the project caused the improvement doesn't follow — other factors could explain the trend"></textarea>
+          </div>
+        </div>
 
-      <div class="row-between" style="margin-top:1rem">
-        <span class="dimtext" id="reading-hint">Be specific — quote the text and explain the error.</span>
-        <div class="btn-row">
-          <button class="btn btn-ghost" onclick="show('stage-welcome')">← Back</button>
-          <button class="btn" onclick="generateReadingOutput()">Generate JSON →</button>
+      </div>
+      <div class="drill-right">
+        <div class="drill-map-area">
+          <div id="reading-map"></div>
         </div>
       </div>
-      <div class="error hidden" id="reading-error"></div>
+    </div>
+    <div class="drill-bottom-bar">
+      <span class="drill-word-count-label" id="reading-hint">Be specific — quote the text.</span>
+      <div class="drill-btn-row">
+        <div class="drill-error-msg hidden" id="reading-error"></div>
+        <button class="drill-btn-back" onclick="show('stage-welcome')">← Back</button>
+        <button class="drill-btn-generate" onclick="generateReadingOutput()">Generate JSON →</button>
+      </div>
     </div>
   </div>
 
@@ -681,6 +718,9 @@ let _isoMarker = null;
 let _drillMap = null;
 let _drillMarker = null;
 let _lastDrillMapPick = -1;
+let _readingMap = null;
+let _readingMapMarker = null;
+let _lastReadingMapPick = -1;
 let _currentDrillType = "vocab"; // "vocab" | "reading" | "vm47" | "iso"
 let _outputDirHandle = null;
 
@@ -868,7 +908,6 @@ function startReadingDrill() {
   _lastReadingPick = idx;
   _readingSession = READING_POOL[idx];
 
-  // Render numbered sentences
   const html = _readingSession.sentences
     .map((s, i) => `<span class="s">S${i + 1}</span>${s} `)
     .join("<br/>");
@@ -878,7 +917,65 @@ function startReadingDrill() {
   document.getElementById("reading-logic").value = "";
   const err = document.getElementById("reading-error");
   err.classList.add("hidden"); err.textContent = "";
+
+  // reset accordion: passage open, others collapsed
+  ['passage', 'grammar', 'logic'].forEach(s => {
+    const el = document.getElementById(`read-sec-${s}`);
+    if (!el) return;
+    if (s === 'passage') {
+      el.classList.add('expanded');
+      el.querySelector('.drill-chevron').textContent = '▲';
+    } else {
+      el.classList.remove('expanded');
+      el.querySelector('.drill-chevron').textContent = '▼';
+    }
+  });
+
   show("stage-reading");
+  requestAnimationFrame(() => {
+    let mapIdx;
+    do { mapIdx = Math.floor(Math.random() * VM47_SCENARIOS.length); } while (mapIdx === _lastReadingMapPick && VM47_SCENARIOS.length > 1);
+    _lastReadingMapPick = mapIdx;
+    const { lat, lng, zoom, title } = VM47_SCENARIOS[mapIdx];
+
+    if (!_readingMap) {
+      _readingMap = L.map("reading-map", { attributionControl: false, zoomControl: true });
+      const readSat = L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        subdomains: ["0","1","2","3"], maxZoom: 20,
+      }).addTo(_readingMap);
+      const readEsa = L.tileLayer(
+        "https://services.terrascope.be/wmts/v2?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=WORLDCOVER_2021_MAP&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=EPSG%3A3857&TILEMATRIX=EPSG%3A3857%3A{z}&TILEROW={y}&TILECOL={x}",
+        { maxZoom: 13 }
+      );
+      L.control.layers(
+        { "🛰 Satellite": readSat, "🌿 ESA Land Cover 2021": readEsa },
+        {}, { position: "topright", collapsed: false }
+      ).addTo(_readingMap);
+      _readingMapMarker = L.circleMarker([lat, lng], {
+        radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
+      }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
+      _readingMap.setView([lat, lng], zoom);
+    } else {
+      _readingMapMarker.setLatLng([lat, lng]);
+      _readingMapMarker.unbindTooltip().bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
+      _readingMap.setView([lat, lng], zoom);
+      _readingMap.invalidateSize();
+    }
+  });
+}
+
+function toggleReadingSection(name) {
+  ['passage', 'grammar', 'logic'].forEach(s => {
+    const el = document.getElementById(`read-sec-${s}`);
+    if (!el) return;
+    if (s === name && !el.classList.contains('expanded')) {
+      el.classList.add('expanded');
+      el.querySelector('.drill-chevron').textContent = '▲';
+    } else if (s !== name) {
+      el.classList.remove('expanded');
+      el.querySelector('.drill-chevron').textContent = '▼';
+    }
+  });
 }
 
 function generateReadingOutput() {
