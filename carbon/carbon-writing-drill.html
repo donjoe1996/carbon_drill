@@ -230,6 +230,14 @@
     .soil-pop-pct { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); min-width: 28px; text-align: right; }
     .soil-pop-coord { padding: 0 12px 6px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); }
     .soil-pop-loading { padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); }
+    /* ── MAP CONTEXT MENU ── */
+    .map-ctx-menu { position: absolute; z-index: 900; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; box-shadow: 0 6px 20px rgba(0,0,0,.55); min-width: 210px; overflow: hidden; display: none; pointer-events: all; }
+    .map-ctx-menu.visible { display: block; }
+    .map-ctx-header { padding: 6px 12px 5px; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); text-transform: uppercase; letter-spacing: .07em; border-bottom: 1px solid var(--border2); }
+    .map-ctx-item { display: flex; align-items: center; gap: 9px; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-dim); cursor: pointer; }
+    .map-ctx-item:hover { background: var(--panel); color: var(--text); }
+    .map-ctx-item .ctx-icon { font-size: 14px; }
+    .map-ctx-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); margin-left: auto; }
     /* ── LOGIN OVERLAY ── */
     #stage-login { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     #stage-login.hidden { display: none; }
@@ -984,34 +992,99 @@ function addMapControls(map) {
   new ZoomDisplay().addTo(map);
 }
 
-function addSoilClickHandler(map) {
-  map.on('click', function(e) {
-    const { lat, lng } = e.latlng;
-    const popup = L.popup({ className: 'soil-popup', maxWidth: 260, autoPan: true })
-      .setLatLng(e.latlng)
-      .setContent('<div class="soil-pop-loading">Querying soil data…</div>')
-      .openOn(map);
+const ESA_CLASSES = { 10:'Tree cover',20:'Shrubland',30:'Grassland',40:'Cropland',50:'Built-up',60:'Bare / sparse vegetation',70:'Snow and ice',80:'Permanent water',90:'Herbaceous wetland',95:'Mangroves',100:'Moss and lichen' };
+
+function queryPixelInfo(latlng, type, map) {
+  const { lat, lng } = latlng;
+  const popup = L.popup({ className: 'soil-popup', maxWidth: 300, autoPan: true })
+    .setLatLng(latlng).setContent('<div class="soil-pop-loading">Querying…</div>').openOn(map);
+  const coord = `<div class="soil-pop-coord">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>`;
+
+  if (type === 'soil') {
     fetch(`https://rest.isric.org/soilgrids/v2.0/classification/query?lon=${lng.toFixed(5)}&lat=${lat.toFixed(5)}&number_classes=3`)
       .then(r => r.json())
       .then(d => {
         const top = d.wrb_class_name || '—';
-        const probs = d.wrb_class_probability || [];
-        const rows = probs.map(([name, pct]) => `
-          <div class="soil-pop-row">
-            <span style="min-width:80px">${name}</span>
-            <div class="soil-pop-bar-wrap"><div class="soil-pop-bar" style="width:${pct}%"></div></div>
-            <span class="soil-pop-pct">${pct}%</span>
-          </div>`).join('');
-        popup.setContent(`
-          <div class="soil-pop-head">
-            <div class="soil-pop-label">WRB Most Probable Soil Group</div>
-            <div class="soil-pop-name">${top}</div>
-          </div>
-          <div class="soil-pop-rows">${rows}</div>
-          <div class="soil-pop-coord">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>`);
+        const rows = (d.wrb_class_probability || []).map(([name, pct]) => `
+          <div class="soil-pop-row"><span style="min-width:80px">${name}</span>
+          <div class="soil-pop-bar-wrap"><div class="soil-pop-bar" style="width:${pct}%"></div></div>
+          <span class="soil-pop-pct">${pct}%</span></div>`).join('');
+        popup.setContent(`<div class="soil-pop-head"><div class="soil-pop-label">WRB Most Probable Soil Group</div><div class="soil-pop-name">${top}</div></div><div class="soil-pop-rows">${rows}</div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+
+  } else if (type === 'eco') {
+    const geom = encodeURIComponent(JSON.stringify({ x: lng, y: lat }));
+    fetch(`https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/0/query?geometry=${geom}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=eco_name,biome_name,realm,ecoregion_area_km2&returnGeometry=false&f=json`)
+      .then(r => r.json())
+      .then(d => {
+        const f = d.features?.[0]?.attributes;
+        if (!f) { popup.setContent('<div class="soil-pop-loading">No ecoregion data here</div>'); return; }
+        const area = Math.round(f.ecoregion_area_km2).toLocaleString();
+        popup.setContent(`
+          <div class="soil-pop-head"><div class="soil-pop-label">RESOLVE Ecoregion 2017</div><div class="soil-pop-name">${f.eco_name}</div></div>
+          <div class="soil-pop-rows">
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:52px">Biome</span><span style="margin-left:auto;text-align:right;max-width:170px;line-height:1.3">${f.biome_name}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:52px">Realm</span><span style="margin-left:auto">${f.realm}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:52px">Area</span><span style="margin-left:auto">${area} km²</span></div>
+          </div>${coord}`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+
+  } else if (type === 'esa') {
+    const size = map.getSize();
+    const b = map.getBounds(); const sw = b.getSouthWest(); const ne = b.getNorthEast();
+    const pt = map.latLngToContainerPoint(latlng);
+    const url = `https://services.terrascope.be/wms/v2?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo` +
+      `&LAYERS=WORLDCOVER_2021_MAP&STYLES=&QUERY_LAYERS=WORLDCOVER_2021_MAP&INFO_FORMAT=text/plain` +
+      `&WIDTH=${size.x}&HEIGHT=${size.y}&BBOX=${sw.lng},${sw.lat},${ne.lng},${ne.lat}` +
+      `&SRS=EPSG:4326&X=${Math.round(pt.x)}&Y=${Math.round(pt.y)}`;
+    fetch(url).then(r => r.text())
+      .then(text => {
+        const match = text.match(/value[_\s]*[=:]\s*["']?(\d+)/i);
+        const val = match ? parseInt(match[1]) : null;
+        const cls = val !== null ? (ESA_CLASSES[val] || `Class ${val}`) : null;
+        if (!cls) { popup.setContent('<div class="soil-pop-loading">No land cover data here</div>'); return; }
+        popup.setContent(`
+          <div class="soil-pop-head"><div class="soil-pop-label">ESA WorldCover 2021</div><div class="soil-pop-name">${cls}</div></div>
+          <div class="soil-pop-rows"><div class="soil-pop-row"><span style="color:var(--text-mut)">Class value</span><span style="margin-left:auto">${val}</span></div></div>${coord}`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+  }
+}
+
+function addMapContextMenu(map) {
+  const container = map.getContainer();
+  const menu = L.DomUtil.create('div', 'map-ctx-menu', container);
+  menu.innerHTML = `
+    <div class="map-ctx-header">Query pixel info</div>
+    <div class="map-ctx-item" data-query="soil"><span class="ctx-icon">🪨</span>WRB Soil Group<span class="map-ctx-sub">SoilGrids</span></div>
+    <div class="map-ctx-item" data-query="eco"><span class="ctx-icon">🌍</span>Ecoregion<span class="map-ctx-sub">RESOLVE</span></div>
+    <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>`;
+
+  let _latlng = null;
+  const hide = () => menu.classList.remove('visible');
+
+  menu.querySelectorAll('.map-ctx-item').forEach(item => {
+    L.DomEvent.on(item, 'click', function(e) {
+      L.DomEvent.stopPropagation(e);
+      hide();
+      if (_latlng) queryPixelInfo(_latlng, this.dataset.query, map);
+    });
   });
+
+  map.on('contextmenu', function(e) {
+    L.DomEvent.preventDefault(e.originalEvent);
+    _latlng = e.latlng;
+    const pt = e.containerPoint;
+    const cw = container.offsetWidth; const ch = container.offsetHeight;
+    menu.style.left = (pt.x + 200 > cw ? pt.x - 210 : pt.x + 4) + 'px';
+    menu.style.top  = (pt.y + 120 > ch ? pt.y - 130 : pt.y + 4) + 'px';
+    menu.classList.add('visible');
+  });
+
+  map.on('click mousedown', hide);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
 }
 
 function updateDrillTabs(activeType) {
@@ -1099,7 +1172,7 @@ function startVocabDrill() {
       ).addTo(_drillMap);
       setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend");
       addMapControls(_drillMap);
-      addSoilClickHandler(_drillMap);
+      addMapContextMenu(_drillMap);
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1208,7 +1281,7 @@ function startReadingDrill() {
       ).addTo(_readingMap);
       setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend");
       addMapControls(_readingMap);
-      addSoilClickHandler(_readingMap);
+      addMapContextMenu(_readingMap);
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1302,7 +1375,7 @@ function startVM47Drill() {
       ).addTo(_vm47Map);
       setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend");
       addMapControls(_vm47Map);
-      addSoilClickHandler(_vm47Map);
+      addMapContextMenu(_vm47Map);
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1414,7 +1487,7 @@ function startIsoDrill() {
       ).addTo(_isoMap);
       setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend");
       addMapControls(_isoMap);
-      addSoilClickHandler(_isoMap);
+      addMapContextMenu(_isoMap);
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
