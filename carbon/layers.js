@@ -15,15 +15,27 @@ const LAYER_URLS = {
   faoHazWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES',
   faoGlwWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL',
   wdpa:            'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/tile/{z}/{y}/{x}',
-  esriBiomeTiles:  'https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}',
   esriBiomeQuery:  'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/FeatureServer/0/query',
 };
 
 // ─── LAYER FACTORIES ──────────────────────────────────────────────────────────
 
 function makeBiomeTileLayer() {
-  return L.tileLayer(LAYER_URLS.esriBiomeTiles, {
-    maxZoom: 13, opacity: 0.85, attribution: '© Esri / RESOLVE',
+  const BIOME_COLORS = {
+    1: '#38A700', 2: '#CCCD65', 3: '#88CE66', 4: '#00734C',
+    5: '#458970', 6: '#7AB6F5', 7: '#FEAA01', 8: '#FEFF73',
+    9: '#BEE7FF', 10: '#D6C39D', 11: '#9ED7C2', 12: '#FE0000',
+    13: '#CC6767', 14: '#FE01C4',
+  };
+  return L.esri.featureLayer({
+    url: LAYER_URLS.esriBiomeQuery.replace('/query', ''),
+    style: feature => {
+      const color = BIOME_COLORS[feature.properties.BIOME_NUM] || '#888';
+      return { fillColor: color, fillOpacity: 0.82, weight: 0.4, color: '#00000018' };
+    },
+    simplifyFactor: 0.5,
+    precision: 5,
+    attribution: '© Esri / RESOLVE',
   });
 }
 
