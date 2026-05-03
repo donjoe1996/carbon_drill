@@ -1175,7 +1175,7 @@ function startVocabDrill() {
     if (!_drillMap) {
       _drillMap = L.map("drill-map", { attributionControl: false, zoomControl: true });
       const ll = createMapLayers(_drillMap);
-      setupMapLegend(_drillMap, "drill-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "vocab-drill-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome);
+      setupMapLegend(_drillMap, "drill-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "vocab-drill-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
       _drillMap._printLayers = { esa: ll.esa, wrb: ll.wrb };
@@ -1264,7 +1264,7 @@ function startReadingDrill() {
     if (!_readingMap) {
       _readingMap = L.map("reading-map", { attributionControl: false, zoomControl: true });
       const ll = createMapLayers(_readingMap);
-      setupMapLegend(_readingMap, "reading-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "read-drill-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome);
+      setupMapLegend(_readingMap, "reading-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "read-drill-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
       _readingMap._printLayers = { esa: ll.esa, wrb: ll.wrb };
@@ -1338,7 +1338,7 @@ function startVM47Drill() {
     if (!_vm47Map) {
       _vm47Map = L.map("vm47-map", { attributionControl: false, zoomControl: true });
       const ll = createMapLayers(_vm47Map);
-      setupMapLegend(_vm47Map, "vm47-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "vm47-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome);
+      setupMapLegend(_vm47Map, "vm47-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "vm47-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
       _vm47Map._printLayers = { esa: ll.esa, wrb: ll.wrb };
@@ -1430,7 +1430,7 @@ function startIsoDrill() {
     if (!_isoMap) {
       _isoMap = L.map("iso-map", { attributionControl: false, zoomControl: true });
       const ll = createMapLayers(_isoMap);
-      setupMapLegend(_isoMap, "iso-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "iso-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome);
+      setupMapLegend(_isoMap, "iso-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "iso-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
       _isoMap._printLayers = { esa: ll.esa, wrb: ll.wrb };

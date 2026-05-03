@@ -14,6 +14,7 @@ const LAYER_URLS = {
   faoAezWms:    'https://data.apps.fao.org/map/gsrv/gsrv1/wms',
   faoHazWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES',
   faoGlwWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL',
+  wdpa:         'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/tile/{z}/{y}/{x}',
 };
 
 // ─── LAYER FACTORIES ──────────────────────────────────────────────────────────
@@ -61,6 +62,10 @@ function createMapLayers(map) {
 
   const biome = makeBiomeTileLayer();
 
+  const wdpa = L.tileLayer(LAYER_URLS.wdpa, {
+    maxZoom: 13, opacity: 0.75, attribution: '© UNEP-WCMC / Protected Planet',
+  });
+
   L.control.layers(
     { '🛰 Satellite': sat, '🏔 Terrain Base': terrain },
     {
@@ -71,11 +76,12 @@ function createMapLayers(map) {
       '🌾 FAO Agro-Eco Zones': fao,
       '🔥 FAO Climate Hazard 2025': haz,
       '🐄 FAO Livestock Density 2020': glw,
+      '🛡 Protected Areas (WDPA)': wdpa,
     },
     { position: 'topright', collapsed: false }
   ).addTo(map);
 
-  return { sat, terrain, esa, wrb, eco, fao, haz, glw, biome };
+  return { sat, terrain, esa, wrb, eco, fao, haz, glw, biome, wdpa };
 }
 
 // ─── MAP LEGENDS ──────────────────────────────────────────────────────────────
@@ -171,6 +177,14 @@ const MAP_LEGENDS = {
       <div class="mleg-row"><span class="mleg-dot" style="background:#FE01C4"></span>Mangroves</div>
     </div><span class="mleg-note" style="display:block;margin-top:6px">© RESOLVE / UNEP-WCMC — 14 biomes aggregated from 846 ecoregions</span></div>`,
   },
+  wdpa: {
+    meta: { name: 'WDPA — Protected Planet 2024', type: 'ArcGIS MapServer', url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer' },
+    legend: `<div class="mleg-legend-wrap"><div class="mleg-grid">
+      <div class="mleg-row"><span class="mleg-dot" style="background:#74b34e;opacity:0.85"></span>Designated / Established</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#b5d48a;opacity:0.85"></span>Proposed / Inscribed</div>
+      <div class="mleg-row"><span class="mleg-dot" style="background:#d4e8b5;opacity:0.85"></span>Not Reported</div>
+    </div><span class="mleg-note" style="display:block;margin-top:6px">© UNEP-WCMC / Protected Planet — World Database on Protected Areas</span></div>`,
+  },
 };
 
 function renderLegend(key) {
@@ -182,8 +196,8 @@ function renderLegend(key) {
   </div>${legend}`;
 }
 
-function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer, glwLayer, biomeLayer) {
-  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer, hazLayer, glwLayer, biomeLayer].filter(Boolean);
+function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer, glwLayer, biomeLayer, wdpaLayer) {
+  const overlays = [esaLayer, wrbLayer, ecoLayer, faoLayer, hazLayer, glwLayer, biomeLayer, wdpaLayer].filter(Boolean);
   map.on('layeradd', function(e) {
     if (overlays.includes(e.layer))
       overlays.forEach(ol => { if (ol !== e.layer && map.hasLayer(ol)) map.removeLayer(ol); });
@@ -199,6 +213,7 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLaye
     else if (faoLayer && map.hasLayer(faoLayer))         el.innerHTML = renderLegend('fao_aez');
     else if (hazLayer && map.hasLayer(hazLayer))         el.innerHTML = renderLegend('fao_haz');
     else if (glwLayer && map.hasLayer(glwLayer))         el.innerHTML = renderLegend('glw4');
+    else if (wdpaLayer && map.hasLayer(wdpaLayer))       el.innerHTML = renderLegend('wdpa');
     else if (map.hasLayer(terrainLayer))                 el.innerHTML = renderLegend('terrain');
     else                                                 el.innerHTML = renderLegend('satellite');
     if (initialized && panelId) {
@@ -424,6 +439,27 @@ function queryPixelInfo(latlng, type, map) {
           </div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
+
+  } else if (type === 'wdpa') {
+    const geom = encodeURIComponent(JSON.stringify({ x: lng, y: lat }));
+    fetch(`https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/1/query?geometry=${geom}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=NAME,DESIG_ENG,IUCN_CAT,STATUS,REP_AREA,ISO3&returnGeometry=false&f=json`)
+      .then(r => r.json())
+      .then(d => {
+        const f = d.features?.[0]?.attributes;
+        if (!f) { popup.setContent('<div class="soil-pop-loading">No protected area at this location</div>'); return; }
+        const area = f.REP_AREA ? Math.round(f.REP_AREA).toLocaleString() + ' km²' : '—';
+        const iucn = f.IUCN_CAT && f.IUCN_CAT !== 'Not Applicable' ? f.IUCN_CAT : '—';
+        popup.setContent(`
+          <div class="soil-pop-head"><div class="soil-pop-label">WDPA — Protected Area</div><div class="soil-pop-name">${f.NAME}</div></div>
+          <div class="soil-pop-rows">
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Designation</span><span style="margin-left:auto;text-align:right;max-width:170px;line-height:1.3">${f.DESIG_ENG || '—'}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">IUCN Cat.</span><span style="margin-left:auto">${iucn}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Status</span><span style="margin-left:auto">${f.STATUS || '—'}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Area</span><span style="margin-left:auto">${area}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Country</span><span style="margin-left:auto">${f.ISO3 || '—'}</span></div>
+          </div>${coord}`);
+      })
+      .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
   }
 }
 
@@ -440,7 +476,8 @@ function addMapContextMenu(map) {
     <div class="map-ctx-item" data-query="aez"><span class="ctx-icon">🌾</span>Agro-Eco Zone<span class="map-ctx-sub">FAO GAEZ v4</span></div>
     <div class="map-ctx-item" data-query="haz"><span class="ctx-icon">🔥</span>Climate Hazard<span class="map-ctx-sub">FAO CRTB 2025</span></div>
     <div class="map-ctx-item" data-query="glw"><span class="ctx-icon">🐄</span>Livestock Density<span class="map-ctx-sub">FAO GLW4 2020</span></div>
-    <div class="map-ctx-item" data-query="biome"><span class="ctx-icon">🌱</span>Biome<span class="map-ctx-sub">RESOLVE 2017</span></div>`;
+    <div class="map-ctx-item" data-query="biome"><span class="ctx-icon">🌱</span>Biome<span class="map-ctx-sub">RESOLVE 2017</span></div>
+    <div class="map-ctx-item" data-query="wdpa"><span class="ctx-icon">🛡</span>Protected Area<span class="map-ctx-sub">WDPA / Protected Planet</span></div>`;
 
   L.DomEvent.disableClickPropagation(menu);
   L.DomEvent.disableScrollPropagation(menu);
