@@ -269,6 +269,12 @@
     .geojson-status { flex: 1; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--green-lt); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
     .geojson-clear { display: none; background: none; border: none; color: var(--text-mut); cursor: pointer; font-size: 12px; padding: 0; line-height: 1; flex-shrink: 0; }
     .geojson-clear.visible { display: block; }
+    /* ── MAP PRINT ── */
+    .map-print-bar { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 5px 12px 7px; background: var(--bg); border-bottom: 1px solid var(--border2); }
+    .map-print-btn { display: flex; align-items: center; gap: 5px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); cursor: pointer; background: #0d1f17; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 9px; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
+    .map-print-btn:hover:not(:disabled) { border-color: var(--green-lt); color: var(--text); }
+    .map-print-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .map-print-hint { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); }
     /* ── LOGIN OVERLAY ── */
     #stage-login { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     #stage-login.hidden { display: none; }
@@ -471,6 +477,10 @@
           <span class="geojson-status" id="drill-geojson-status"></span>
           <button class="geojson-clear" id="drill-geojson-clear" title="Remove layer">✕</button>
         </div>
+        <div class="map-print-bar">
+          <button class="map-print-btn" id="drill-print-btn" onclick="printMapToPdf(() => _drillMap, this)">🖨 Print PDF</button>
+          <span class="map-print-hint">A4 landscape · ESA &amp; WRB</span>
+        </div>
 
         <div class="panel open" id="vocab-drill-panel-vocab">
           <div class="panel-header" onclick="togglePanel('vocab-drill','vocab',['vocab','scenario','response','legend'])">
@@ -577,6 +587,10 @@
           <input type="file" id="read-geojson-input" class="geojson-file-input" accept=".geojson,.json">
           <span class="geojson-status" id="read-geojson-status"></span>
           <button class="geojson-clear" id="read-geojson-clear" title="Remove layer">✕</button>
+        </div>
+        <div class="map-print-bar">
+          <button class="map-print-btn" id="read-print-btn" onclick="printMapToPdf(() => _readingMap, this)">🖨 Print PDF</button>
+          <span class="map-print-hint">A4 landscape · ESA &amp; WRB</span>
         </div>
 
         <div class="panel open" id="read-drill-panel-passage">
@@ -686,6 +700,10 @@
           <input type="file" id="vm47-geojson-input" class="geojson-file-input" accept=".geojson,.json">
           <span class="geojson-status" id="vm47-geojson-status"></span>
           <button class="geojson-clear" id="vm47-geojson-clear" title="Remove layer">✕</button>
+        </div>
+        <div class="map-print-bar">
+          <button class="map-print-btn" id="vm47-print-btn" onclick="printMapToPdf(() => _vm47Map, this)">🖨 Print PDF</button>
+          <span class="map-print-hint">A4 landscape · ESA &amp; WRB</span>
         </div>
 
         <div class="panel open" id="vm47-panel-scenario">
@@ -800,6 +818,10 @@
           <input type="file" id="iso-geojson-input" class="geojson-file-input" accept=".geojson,.json">
           <span class="geojson-status" id="iso-geojson-status"></span>
           <button class="geojson-clear" id="iso-geojson-clear" title="Remove layer">✕</button>
+        </div>
+        <div class="map-print-bar">
+          <button class="map-print-btn" id="iso-print-btn" onclick="printMapToPdf(() => _isoMap, this)">🖨 Print PDF</button>
+          <span class="map-print-hint">A4 landscape · ESA &amp; WRB</span>
         </div>
 
         <div class="panel open" id="iso-panel-scenario">
@@ -922,6 +944,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="data.js"></script>
 <script>
 // ── TILE CACHE ENGINE ──────────────────────────────────────────────────────
@@ -1661,6 +1685,7 @@ function startVocabDrill() {
       setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao, drillHaz, drillGlw, drillBiome);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
+      _drillMap._printLayers = { esa: drillEsa, wrb: drillWrb };
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1783,6 +1808,7 @@ function startReadingDrill() {
       setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao, readHaz, readGlw, readBiome);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
+      _readingMap._printLayers = { esa: readEsa, wrb: readWrb };
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1890,6 +1916,7 @@ function startVM47Drill() {
       setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao, vm47Haz, vm47Glw, vm47Biome);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
+      _vm47Map._printLayers = { esa: vm47Esa, wrb: vm47Wrb };
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -2015,6 +2042,7 @@ function startIsoDrill() {
       setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao, isoHaz, isoGlw, isoBiome);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
+      _isoMap._printLayers = { esa: isoEsa, wrb: isoWrb };
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -2170,6 +2198,129 @@ setupLocSearch('drill-loc-input', 'drill-loc-clear', 'drill-loc-results', () => 
 setupLocSearch('read-loc-input',  'read-loc-clear',  'read-loc-results',  () => _readingMap);
 setupLocSearch('vm47-loc-input',  'vm47-loc-clear',  'vm47-loc-results',  () => _vm47Map);
 setupLocSearch('iso-loc-input',   'iso-loc-clear',   'iso-loc-results',   () => _isoMap);
+
+// ─── PRINT TO PDF ─────────────────────────────────────────────────────────────
+
+async function printMapToPdf(mapGetter, btnEl) {
+  const map = mapGetter();
+  if (!map) { alert('Open a drill first to print.'); return; }
+  if (!window.html2canvas || !window.jspdf) { alert('PDF library still loading — try again in a moment.'); return; }
+  const pl = map._printLayers;
+  if (!pl) { alert('Map not fully initialized. Please wait and try again.'); return; }
+
+  const origText = btnEl.textContent;
+  btnEl.disabled = true;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  const pageW = 297, pageH = 210, margin = 8;
+  const legendW = 72;
+  const mapImgW = pageW - legendW - margin * 3;
+  const mapImgH = pageH - margin * 2;
+
+  const ESA_ITEMS = [
+    { hex: '#006400', label: 'Tree cover' },
+    { hex: '#ffbb22', label: 'Shrubland' },
+    { hex: '#ffff4c', label: 'Grassland' },
+    { hex: '#f096ff', label: 'Cropland' },
+    { hex: '#fa0000', label: 'Built-up' },
+    { hex: '#b4b4b4', label: 'Barren / sparse veg.' },
+    { hex: '#f0f0f0', label: 'Snow and ice' },
+    { hex: '#0064c8', label: 'Permanent water' },
+    { hex: '#0096a0', label: 'Herbaceous wetland' },
+    { hex: '#00cf75', label: 'Mangroves' },
+    { hex: '#fae6a0', label: 'Moss and lichen' },
+  ];
+
+  const printLayers = [
+    { layer: pl.esa, title: 'ESA WorldCover 2021', subtitle: 'WMTS · services.terrascope.be', items: ESA_ITEMS },
+    { layer: pl.wrb, title: 'WRB Soil Groups', subtitle: 'WMS · ISRIC SoilGrids',
+      legendImgUrl: 'https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png' },
+  ];
+
+  const savedActive = [pl.esa, pl.wrb].find(l => map.hasLayer(l)) || null;
+
+  try {
+    for (let i = 0; i < printLayers.length; i++) {
+      const { layer, title, subtitle, items, legendImgUrl } = printLayers[i];
+      btnEl.textContent = `${i + 1}/${printLayers.length} …`;
+
+      [pl.esa, pl.wrb].forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+      map.addLayer(layer);
+      await new Promise(r => setTimeout(r, 1800));
+
+      if (i > 0) pdf.addPage();
+
+      let mapImgData = null;
+      try {
+        const canvas = await html2canvas(map.getContainer(), { useCORS: true, allowTaint: true, logging: false, scale: 1 });
+        mapImgData = canvas.toDataURL('image/jpeg', 0.88);
+      } catch (_) {}
+
+      if (mapImgData) pdf.addImage(mapImgData, 'JPEG', margin, margin, mapImgW, mapImgH);
+
+      const lx = margin + mapImgW + margin;
+      const ly = margin;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(90, 184, 112);
+      pdf.text(title, lx, ly + 7);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 150, 115);
+      pdf.text(subtitle, lx, ly + 12);
+
+      pdf.setDrawColor(42, 74, 50);
+      pdf.setLineWidth(0.3);
+      pdf.line(lx, ly + 14.5, lx + legendW - 2, ly + 14.5);
+
+      if (items) {
+        let cy = ly + 20;
+        for (const { hex, label } of items) {
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          pdf.setFillColor(r, g, b);
+          pdf.setDrawColor(40, 40, 40);
+          pdf.setLineWidth(0.2);
+          pdf.roundedRect(lx, cy - 2.8, 4, 4, 0.5, 0.5, 'FD');
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7.5);
+          pdf.setTextColor(212, 232, 216);
+          pdf.text(label, lx + 6, cy + 0.5);
+          cy += 8;
+        }
+      } else if (legendImgUrl) {
+        try {
+          const res = await fetch(legendImgUrl, { mode: 'cors' });
+          const blob = await res.blob();
+          const legDataUrl = await new Promise(rs => {
+            const fr = new FileReader(); fr.onload = () => rs(fr.result); fr.readAsDataURL(blob);
+          });
+          pdf.addImage(legDataUrl, 'PNG', lx, ly + 17, legendW - 4, Math.min(mapImgH - 22, 130));
+        } catch (_) {
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(100, 150, 115);
+          pdf.text('Legend image unavailable', lx, ly + 24);
+        }
+      }
+
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(74, 112, 88);
+      const today = new Date().toISOString().slice(0, 10);
+      pdf.text(`Carbon Drill — ${today}`, margin, pageH - 3);
+      pdf.text(`${i + 1} / ${printLayers.length}`, pageW - margin - 10, pageH - 3);
+    }
+
+    pdf.save('carbon-map-print.pdf');
+  } finally {
+    [pl.esa, pl.wrb].forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+    if (savedActive) map.addLayer(savedActive);
+    btnEl.disabled = false;
+    btnEl.textContent = origText;
+  }
+}
 
 function setupGeoJsonUpload(inputId, statusId, clearId, mapGetter) {
   const input  = document.getElementById(inputId);
