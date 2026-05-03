@@ -2248,7 +2248,13 @@ async function printMapToPdf(mapGetter, btnEl) {
 
       [pl.esa, pl.wrb].forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
       map.addLayer(layer);
-      await new Promise(r => setTimeout(r, 1800));
+      // Wait for tiles to fully render — use layer 'load' event, 10 s fallback
+      await new Promise(r => {
+        let settled = false;
+        const finish = () => { if (!settled) { settled = true; layer.off('load', finish); r(); } };
+        layer.once('load', finish);
+        setTimeout(finish, 10000);
+      });
 
       if (i > 0) pdf.addPage();
 
