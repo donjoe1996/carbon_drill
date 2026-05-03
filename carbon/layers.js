@@ -15,7 +15,7 @@ const LAYER_URLS = {
   faoHazWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES',
   faoGlwWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL',
   wdpa:            'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/tile/{z}/{y}/{x}',
-  esriBiomeTiles:  'https://tiles.arcgis.com/tiles/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}',
+  esriBiomeTiles:  'https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}',
   esriBiomeQuery:  'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/FeatureServer/0/query',
 };
 
