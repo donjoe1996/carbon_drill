@@ -261,6 +261,14 @@
     .loc-result-name { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text); }
     .loc-result-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-mut); }
     .loc-search-status { padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); }
+    /* ── GEOJSON UPLOAD ── */
+    .geojson-upload-bar { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 6px 12px 8px; background: var(--surface); border-bottom: 1px solid var(--border2); }
+    .geojson-upload-btn { display: flex; align-items: center; gap: 5px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-mut); cursor: pointer; background: #0d1f17; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 9px; transition: border-color 0.15s, color 0.15s; white-space: nowrap; user-select: none; }
+    .geojson-upload-btn:hover { border-color: var(--green-lt); color: var(--text); }
+    .geojson-file-input { display: none; }
+    .geojson-status { flex: 1; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--green-lt); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .geojson-clear { display: none; background: none; border: none; color: var(--text-mut); cursor: pointer; font-size: 12px; padding: 0; line-height: 1; flex-shrink: 0; }
+    .geojson-clear.visible { display: block; }
     /* ── LOGIN OVERLAY ── */
     #stage-login { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; }
     #stage-login.hidden { display: none; }
@@ -457,6 +465,12 @@
           </div>
           <div class="loc-search-results hidden" id="drill-loc-results"></div>
         </div>
+        <div class="geojson-upload-bar">
+          <label class="geojson-upload-btn" for="drill-geojson-input">⬆ GeoJSON</label>
+          <input type="file" id="drill-geojson-input" class="geojson-file-input" accept=".geojson,.json">
+          <span class="geojson-status" id="drill-geojson-status"></span>
+          <button class="geojson-clear" id="drill-geojson-clear" title="Remove layer">✕</button>
+        </div>
 
         <div class="panel open" id="vocab-drill-panel-vocab">
           <div class="panel-header" onclick="togglePanel('vocab-drill','vocab',['vocab','scenario','response','legend'])">
@@ -557,6 +571,12 @@
             <button class="loc-search-clear" id="read-loc-clear" title="Clear">✕</button>
           </div>
           <div class="loc-search-results hidden" id="read-loc-results"></div>
+        </div>
+        <div class="geojson-upload-bar">
+          <label class="geojson-upload-btn" for="read-geojson-input">⬆ GeoJSON</label>
+          <input type="file" id="read-geojson-input" class="geojson-file-input" accept=".geojson,.json">
+          <span class="geojson-status" id="read-geojson-status"></span>
+          <button class="geojson-clear" id="read-geojson-clear" title="Remove layer">✕</button>
         </div>
 
         <div class="panel open" id="read-drill-panel-passage">
@@ -660,6 +680,12 @@
             <button class="loc-search-clear" id="vm47-loc-clear" title="Clear">✕</button>
           </div>
           <div class="loc-search-results hidden" id="vm47-loc-results"></div>
+        </div>
+        <div class="geojson-upload-bar">
+          <label class="geojson-upload-btn" for="vm47-geojson-input">⬆ GeoJSON</label>
+          <input type="file" id="vm47-geojson-input" class="geojson-file-input" accept=".geojson,.json">
+          <span class="geojson-status" id="vm47-geojson-status"></span>
+          <button class="geojson-clear" id="vm47-geojson-clear" title="Remove layer">✕</button>
         </div>
 
         <div class="panel open" id="vm47-panel-scenario">
@@ -768,6 +794,12 @@
             <button class="loc-search-clear" id="iso-loc-clear" title="Clear">✕</button>
           </div>
           <div class="loc-search-results hidden" id="iso-loc-results"></div>
+        </div>
+        <div class="geojson-upload-bar">
+          <label class="geojson-upload-btn" for="iso-geojson-input">⬆ GeoJSON</label>
+          <input type="file" id="iso-geojson-input" class="geojson-file-input" accept=".geojson,.json">
+          <span class="geojson-status" id="iso-geojson-status"></span>
+          <button class="geojson-clear" id="iso-geojson-clear" title="Remove layer">✕</button>
         </div>
 
         <div class="panel open" id="iso-panel-scenario">
@@ -2138,6 +2170,54 @@ setupLocSearch('drill-loc-input', 'drill-loc-clear', 'drill-loc-results', () => 
 setupLocSearch('read-loc-input',  'read-loc-clear',  'read-loc-results',  () => _readingMap);
 setupLocSearch('vm47-loc-input',  'vm47-loc-clear',  'vm47-loc-results',  () => _vm47Map);
 setupLocSearch('iso-loc-input',   'iso-loc-clear',   'iso-loc-results',   () => _isoMap);
+
+function setupGeoJsonUpload(inputId, statusId, clearId, mapGetter) {
+  const input  = document.getElementById(inputId);
+  const status = document.getElementById(statusId);
+  const clearBtn = document.getElementById(clearId);
+  let layer = null;
+
+  input.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const map = mapGetter();
+      if (!map) { status.textContent = 'Open a drill first'; status.style.color = 'var(--red)'; return; }
+      try {
+        const geojson = JSON.parse(e.target.result);
+        if (layer) { map.removeLayer(layer); layer = null; }
+        layer = L.geoJSON(geojson, {
+          style: { color: '#52b788', weight: 1.5, fillColor: '#52b788', fillOpacity: 0.12 },
+          pointToLayer: (_, ll) => L.circleMarker(ll, { radius: 5, color: '#52b788', weight: 1.5, fillOpacity: 0.7 })
+        }).addTo(map);
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) map.fitBounds(bounds, { padding: [28, 28] });
+        const n = geojson.features ? geojson.features.length : geojson.geometries ? geojson.geometries.length : 1;
+        status.textContent = `${file.name} · ${n} feature${n !== 1 ? 's' : ''}`;
+        status.style.color = 'var(--green-lt)';
+        clearBtn.classList.add('visible');
+      } catch(_) {
+        status.textContent = 'Invalid GeoJSON';
+        status.style.color = 'var(--red)';
+      }
+      input.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    const map = mapGetter();
+    if (layer && map) { map.removeLayer(layer); layer = null; }
+    status.textContent = '';
+    clearBtn.classList.remove('visible');
+  });
+}
+
+setupGeoJsonUpload('drill-geojson-input', 'drill-geojson-status', 'drill-geojson-clear', () => _drillMap);
+setupGeoJsonUpload('read-geojson-input',  'read-geojson-status',  'read-geojson-clear',  () => _readingMap);
+setupGeoJsonUpload('vm47-geojson-input',  'vm47-geojson-status',  'vm47-geojson-clear',  () => _vm47Map);
+setupGeoJsonUpload('iso-geojson-input',   'iso-geojson-status',   'iso-geojson-clear',   () => _isoMap);
 </script>
 </body>
 </html>
