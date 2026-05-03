@@ -1677,6 +1677,7 @@ function startVocabDrill() {
       );
       const drillBiome = makeBiomeTileLayer();
       const drillSatPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
+      const drillSatLabelsPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
       L.control.layers(
         { "🛰 Satellite": drillSat, "🏔 Terrain Base": drillTerrain },
         { "🌿 ESA Land Cover 2021": drillEsa, "🪨 WRB Soil Groups": drillWrb, "🌍 RESOLVE Ecoregions": drillEco, "🌱 RESOLVE Biomes": drillBiome, "🌾 FAO Agro-Eco Zones": drillFao, "🔥 FAO Climate Hazard 2025": drillHaz, "🐄 FAO Livestock Density 2020": drillGlw },
@@ -1685,7 +1686,7 @@ function startVocabDrill() {
       setupMapLegend(_drillMap, "drill-map-legend", drillTerrain, drillEsa, drillWrb, drillEco, "vocab-drill-panel-legend", drillFao, drillHaz, drillGlw, drillBiome);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
-      _drillMap._printLayers = { esa: drillEsa, wrb: drillWrb, sat: drillSatPrint };
+      _drillMap._printLayers = { esa: drillEsa, wrb: drillWrb, sat: drillSatPrint, satLabels: drillSatLabelsPrint };
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1801,6 +1802,7 @@ function startReadingDrill() {
       );
       const readBiome = makeBiomeTileLayer();
       const readSatPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
+      const readSatLabelsPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
       L.control.layers(
         { "🛰 Satellite": readSat, "🏔 Terrain Base": readTerrain },
         { "🌿 ESA Land Cover 2021": readEsa, "🪨 WRB Soil Groups": readWrb, "🌍 RESOLVE Ecoregions": readEco, "🌱 RESOLVE Biomes": readBiome, "🌾 FAO Agro-Eco Zones": readFao, "🔥 FAO Climate Hazard 2025": readHaz, "🐄 FAO Livestock Density 2020": readGlw },
@@ -1809,7 +1811,7 @@ function startReadingDrill() {
       setupMapLegend(_readingMap, "reading-map-legend", readTerrain, readEsa, readWrb, readEco, "read-drill-panel-legend", readFao, readHaz, readGlw, readBiome);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
-      _readingMap._printLayers = { esa: readEsa, wrb: readWrb, sat: readSatPrint };
+      _readingMap._printLayers = { esa: readEsa, wrb: readWrb, sat: readSatPrint, satLabels: readSatLabelsPrint };
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1910,6 +1912,7 @@ function startVM47Drill() {
       );
       const vm47Biome = makeBiomeTileLayer();
       const vm47SatPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
+      const vm47SatLabelsPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
       L.control.layers(
         { "🛰 Satellite": vm47Sat, "🏔 Terrain Base": vm47Terrain },
         { "🌿 ESA Land Cover 2021": vm47Esa, "🪨 WRB Soil Groups": vm47Wrb, "🌍 RESOLVE Ecoregions": vm47Eco, "🌱 RESOLVE Biomes": vm47Biome, "🌾 FAO Agro-Eco Zones": vm47Fao, "🔥 FAO Climate Hazard 2025": vm47Haz, "🐄 FAO Livestock Density 2020": vm47Glw },
@@ -1918,7 +1921,7 @@ function startVM47Drill() {
       setupMapLegend(_vm47Map, "vm47-map-legend", vm47Terrain, vm47Esa, vm47Wrb, vm47Eco, "vm47-panel-legend", vm47Fao, vm47Haz, vm47Glw, vm47Biome);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
-      _vm47Map._printLayers = { esa: vm47Esa, wrb: vm47Wrb, sat: vm47SatPrint };
+      _vm47Map._printLayers = { esa: vm47Esa, wrb: vm47Wrb, sat: vm47SatPrint, satLabels: vm47SatLabelsPrint };
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -2037,6 +2040,7 @@ function startIsoDrill() {
       );
       const isoBiome = makeBiomeTileLayer();
       const isoSatPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
+      const isoSatLabelsPrint = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20 });
       L.control.layers(
         { "🛰 Satellite": isoSat, "🏔 Terrain Base": isoTerrain },
         { "🌿 ESA Land Cover 2021": isoEsa, "🪨 WRB Soil Groups": isoWrb, "🌍 RESOLVE Ecoregions": isoEco, "🌱 RESOLVE Biomes": isoBiome, "🌾 FAO Agro-Eco Zones": isoFao, "🔥 FAO Climate Hazard 2025": isoHaz, "🐄 FAO Livestock Density 2020": isoGlw },
@@ -2045,7 +2049,7 @@ function startIsoDrill() {
       setupMapLegend(_isoMap, "iso-map-legend", isoTerrain, isoEsa, isoWrb, isoEco, "iso-panel-legend", isoFao, isoHaz, isoGlw, isoBiome);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
-      _isoMap._printLayers = { esa: isoEsa, wrb: isoWrb, sat: isoSatPrint };
+      _isoMap._printLayers = { esa: isoEsa, wrb: isoWrb, sat: isoSatPrint, satLabels: isoSatLabelsPrint };
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -2237,8 +2241,8 @@ async function printMapToPdf(mapGetter, btnEl) {
   ];
 
   const printLayers = [
-    { layer: pl.sat, title: 'Satellite Imagery', subtitle: 'XYZ Tile · Esri World Imagery',
-      legendNote: 'True-colour satellite imagery\n© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS' },
+    { layer: pl.sat, extraLayer: pl.satLabels, title: 'Satellite Hybrid', subtitle: 'XYZ Tile · Esri World Imagery + Place Labels',
+      legendNote: 'True-colour satellite imagery with place names, roads and boundaries\n© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS' },
     { layer: pl.esa, title: 'ESA WorldCover 2021', subtitle: 'WMTS · services.terrascope.be', items: ESA_ITEMS },
     { layer: pl.wrb, title: 'WRB Soil Groups', subtitle: 'WMS · ISRIC SoilGrids',
       legendImgUrl: 'https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png' },
@@ -2248,11 +2252,12 @@ async function printMapToPdf(mapGetter, btnEl) {
 
   try {
     for (let i = 0; i < printLayers.length; i++) {
-      const { layer, title, subtitle, items, legendImgUrl, legendNote } = printLayers[i];
+      const { layer, extraLayer, title, subtitle, items, legendImgUrl, legendNote } = printLayers[i];
       btnEl.textContent = `${i + 1}/${printLayers.length} …`;
 
-      [pl.esa, pl.wrb, pl.sat].forEach(l => { if (l && map.hasLayer(l)) map.removeLayer(l); });
+      [pl.esa, pl.wrb, pl.sat, pl.satLabels].forEach(l => { if (l && map.hasLayer(l)) map.removeLayer(l); });
       map.addLayer(layer);
+      if (extraLayer) map.addLayer(extraLayer);
       await new Promise(r => setTimeout(r, 4000));
 
       if (i > 0) pdf.addPage();
@@ -2350,7 +2355,7 @@ async function printMapToPdf(mapGetter, btnEl) {
 
     pdf.save('carbon-map-print.pdf');
   } finally {
-    [pl.esa, pl.wrb, pl.sat].forEach(l => { if (l && map.hasLayer(l)) map.removeLayer(l); });
+    [pl.esa, pl.wrb, pl.sat, pl.satLabels].forEach(l => { if (l && map.hasLayer(l)) map.removeLayer(l); });
     if (savedActive) map.addLayer(savedActive);
     btnEl.disabled = false;
     btnEl.textContent = origText;
