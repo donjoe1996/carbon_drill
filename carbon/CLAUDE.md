@@ -39,6 +39,13 @@ All 4 drill stages are `position: fixed; inset: 0; z-index: 200` full-screen ove
 - `togglePanel(prefix, name, panels?)` — opens clicked panel, collapses others. Re-clicking an open panel collapses it.
 - Default panels array: `['scenario', 'criteria', 'det', 'legend']` (VM47/Iso). Vocab uses `['vocab','scenario','response','legend']`, Reading uses `['passage','grammar','logic','legend']`.
 
+Above the accordion, the left column has three utility bars (top to bottom):
+1. **Location search** (`.loc-search-wrap`) — Nominatim geocoder, flies map to result
+2. **GeoJSON upload** (`.geojson-upload-bar`) — file input, renders `L.geoJSON` overlay, fitBounds, ✕ to clear
+3. **Print PDF** (`.map-print-bar`) — generates a 2-page A4 landscape PDF (ESA + WRB) via html2canvas + jsPDF
+
+Below the accordion, a **tile cache bar** (`.tile-cache-bar`) shows hit/miss stats with a Clear button.
+
 **Right column** — full-height Leaflet map. All 4 maps share the same layer structure and helper functions (see Map section below).
 
 ### Drill types
@@ -53,38 +60,70 @@ All 4 drill stages are `position: fixed; inset: 0; z-index: 200` full-screen ove
 
 ### Map (Leaflet — all 4 drills)
 
-Map instances are lazily created and reused (`_drillMap`, `_readingMap`, `_vm47Map`, `_isoMap`). Each map is initialized once in the `start*Drill()` function.
+Map instances are lazily created and reused (`_drillMap`, `_readingMap`, `_vm47Map`, `_isoMap`). Each map is initialized once in the `start*Drill()` function. CDN dependencies: Leaflet 1.9.4, html2canvas 1.4.1, jsPDF 2.5.1 UMD.
 
 **Layer control** (top-right, always expanded):
-- Base layers (radio — one active): 🛰 Satellite (Google) | 🏔 Terrain Base (Esri World Terrain)
-- Overlay layers (mutually exclusive — selecting one removes the other): 🌿 ESA Land Cover 2021 | 🪨 WRB Soil Groups (ISRIC WMS)
+- Base layers (radio): 🛰 Satellite (Google) | 🏔 Terrain Base (Esri World Terrain)
+- Overlay layers (mutually exclusive — `setupMapLegend` enforces one-at-a-time):
+  - 🌿 ESA Land Cover 2021 (WMTS, Terrascope)
+  - 🪨 WRB Soil Groups (WMS, ISRIC)
+  - 🌍 RESOLVE Ecoregions (XYZ tile, UNEP-WCMC)
+  - 🌱 RESOLVE Biomes (same XYZ tile as ecoregions — reuses `makeBiomeTileLayer()`)
+  - 🌾 FAO Agro-Eco Zones (WMS, FAO GAEZ v4)
+  - 🔥 FAO Climate Hazard 2025 (WMTS, FAO CRTB)
+  - 🐄 FAO Livestock Density 2020 (WMTS, FAO GLW4)
 
 **Map controls** (added via `addMapControls(map)`):
 - Scale bar — km only, bottom-left
 - Zoom level display (`Z 10`) — bottom-right, live update on zoom
 
-**Soil click query** (`addSoilClickHandler(map)`): clicking any point on a map fires a fetch to `https://rest.isric.org/soilgrids/v2.0/classification/query?lon=…&lat=…&number_classes=3`. Shows a styled dark popup with WRB soil group name + top-3 probability bars.
+**Context menu** (`addMapContextMenu(map)`): right-click opens a pixel-query menu. Dispatches to `queryPixelInfo(latlng, type, map)` which supports:
 
-**Dynamic legend** (`setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, panelId)`):
-- Listens to `layeradd` / `layerremove` events.
+| type | Source | Method |
+|---|---|---|
+| `soil` | ISRIC SoilGrids v2 | REST API |
+| `eco` | RESOLVE Ecoregions FeatureServer | ArcGIS query |
+| `esa` | ESA WorldCover 2021 | Canvas tile read (no GetFeatureInfo) |
+| `aez` | FAO GAEZ v4 | WMS GetFeatureInfo |
+| `haz` | FAO CRTB HAZ-BI 2025 | WMTS GetFeatureInfo |
+| `glw` | FAO GLW4 2020 | WMTS GetFeatureInfo |
+| `biome` | RESOLVE Ecoregions FeatureServer | ArcGIS query (returns biome_name) |
+
+**Tile cache** (IIFE, runs before map init): monkey-patches `L.TileLayer.prototype.createTile`. Two-layer cache: memory (Map of `url → objectURL`) + Cache API (persists across reloads). Tiles are fetched with `mode: 'cors'`; CORS failures fall back to direct `img.src` (Google tiles). `window.clearTileCache()` clears both layers.
+
+**Dynamic legend** (`setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer, glwLayer, biomeLayer)`):
+- 11 parameters. Listens to `layeradd` / `layerremove` events.
 - Renders legend content into the `map-legend-area` div inside panel 4.
-- When layer is switched (not on initial load), panel 4 auto-opens so the legend is visible.
-- Overlays are mutually exclusive: adding ESA removes WRB and vice versa.
+- When a layer is switched (not on initial load), panel 4 auto-opens.
+- Overlay mutual exclusion: adding any overlay removes all others.
+- Legend priority order: wrb → esa → ecoregions → biomes → fao_aez → fao_haz → glw4 → terrain → satellite
 
-**Legend content** (`MAP_LEGENDS` + `renderLegend(key)`): each legend entry has `meta` (official dataset name, service type, service URL for QGIS copy-paste) and `legend` HTML. Keys: `satellite`, `terrain`, `esa`, `wrb`.
+**`_printLayers`**: after each map is initialized, `map._printLayers = { esa, wrb }` is set so `printMapToPdf` can access the two printable overlay references.
 
-Layer/legend metadata:
+**Location search** (`setupLocSearch(inputId, clearId, resultsId, mapGetter)`): debounced Nominatim fetch, renders dropdown, flies map on selection.
+
+**GeoJSON upload** (`setupGeoJsonUpload(inputId, statusId, clearId, mapGetter)`): FileReader → `L.geoJSON` with green style → `fitBounds`. Replaces previous layer on re-upload; clear button removes it.
+
+**Print to PDF** (`printMapToPdf(mapGetter, btnEl)`): async, disables button during run. For each of [ESA, WRB]: switches layer, waits 1.8 s for tiles, captures map with `html2canvas`, assembles A4 landscape page in jsPDF — map image left (~205 mm), legend panel right (~72 mm). ESA legend drawn with colored `roundedRect` + text; WRB legend fetched as PNG from GetLegendGraphic and embedded. Saves `carbon-map-print.pdf`. Restores original layer state in `finally`.
+
+**Legend content** (`MAP_LEGENDS` + `renderLegend(key)`): each entry has `meta` (name, type, service URL) and `legend` HTML.
+
 | Key | Dataset name | Type | Service URL |
 |---|---|---|---|
 | satellite | Google Maps Satellite | XYZ Tile | `https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}` |
 | terrain | Esri World Terrain Base | XYZ Tile | `https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}` |
 | esa | ESA WorldCover 2021 v200 | WMTS | `https://services.terrascope.be/wmts/v2` |
 | wrb | ISRIC — WRB Most Probable Soil Group | WMS | `https://maps.isric.org/mapserv?map=/map/wrb.map` |
+| ecoregions | RESOLVE Ecoregions 2017 | XYZ Tile | `https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}` |
+| biomes | RESOLVE Biomes 2017 | ArcGIS MapServer | same tile URL as ecoregions |
+| fao_aez | FAO Agro-Ecological Zones (AEZ) | WMS | `https://data.apps.fao.org/map/gsrv/gsrv1/wms` |
+| fao_haz | FAO Climate Risk — Hazard-Biophysical Index 2025 | WMTS | `https://data.apps.fao.org/map/wmts/wmts` |
+| glw4 | FAO Global Livestock Density 2020 — Cattle (1 km) | WMTS | `https://data.apps.fao.org/map/wmts/wmts` |
 
 WRB legend image: `GetLegendGraphic` requires `VERSION=1.1.1` — without it the server returns HTML instead of PNG.
 
 ### Output flow
-All drills call `showOutput(output, drillType)` which renders JSON into `#json-output`. User copies/pastes the JSON into claude.ai. No API calls are made from the browser (except the SoilGrids click query).
+All drills call `showOutput(output, drillType)` which renders JSON into `#json-output`. User copies/pastes the JSON into claude.ai. No API calls are made from the browser (except the pixel query endpoints and the Nominatim geocoder).
 
 ## CSS Design Tokens (`:root`)
 
@@ -105,6 +144,7 @@ Fonts: `DM Sans` (UI) + `DM Mono` (labels/badges/mono) across all stages.
 - **Add a reading passage**: append to `READING_POOL` in `data.js` (include `sentences[]` and `planted_errors[]`)
 - **Add a VM47 scenario**: append to `VM47_SCENARIOS` in `data.js` (include `lat`, `lng`, `zoom`, `eligible`, `failing_criteria[]`, `rationale`)
 - **Add an Isometric scenario**: same pattern, append to `ISO_SCENARIOS`
-- **Add a new spatial layer**: add a new `L.tileLayer` / `L.tileLayer.wms` in each map init block, add to `L.control.layers()`, add a key to `MAP_LEGENDS`, and update `setupMapLegend` detection logic
+- **Add a new spatial layer**: add a new `L.tileLayer` / `L.tileLayer.wms` in each of the 4 map init blocks, add to `L.control.layers()`, add a key to `MAP_LEGENDS`, update `setupMapLegend` (add param + detection branch), add a `queryPixelInfo` branch and context menu item if pixel query is needed
+- **Add a layer to the PDF print**: add an entry to the `printLayers` array in `printMapToPdf` with `layer`, `title`, `subtitle`, and either `items` (colored dot legend) or `legendImgUrl`
 - **Add a new drill type**: add a stage div, a drill card in `stage-welcome`, start/generate functions, a tab button in each `.drill-tabs` row, and a branch in `showOutput()`
 - **Change the review rubric**: edit `review_instructions` inside the relevant `generate*Output()` function
