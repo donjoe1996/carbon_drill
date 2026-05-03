@@ -58,7 +58,7 @@ function createMapLayers(map) {
   });
 
   const eco = L.tileLayer(LAYER_URLS.resolveEco, {
-    maxZoom: 13, opacity: 0.85, attribution: '© RESOLVE / UNEP-WCMC',
+    minZoom: 10, maxZoom: 13, opacity: 0.85, attribution: '© RESOLVE / UNEP-WCMC',
   });
 
   const fao = L.tileLayer.wms(LAYER_URLS.faoAezWms, {
