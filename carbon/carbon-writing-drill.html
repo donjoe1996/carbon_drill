@@ -944,7 +944,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="data.js"></script>
 <script>
@@ -2204,7 +2203,7 @@ setupLocSearch('iso-loc-input',   'iso-loc-clear',   'iso-loc-results',   () => 
 async function printMapToPdf(mapGetter, btnEl) {
   const map = mapGetter();
   if (!map) { alert('Open a drill first to print.'); return; }
-  if (!window.html2canvas || !window.jspdf) { alert('PDF library still loading — try again in a moment.'); return; }
+  if (!window.jspdf) { alert('PDF library still loading — try again in a moment.'); return; }
   const pl = map._printLayers;
   if (!pl) { alert('Map not fully initialized. Please wait and try again.'); return; }
 
@@ -2252,11 +2251,36 @@ async function printMapToPdf(mapGetter, btnEl) {
 
       if (i > 0) pdf.addPage();
 
-      let mapImgData = null;
-      try {
-        const canvas = await html2canvas(map.getContainer(), { useCORS: true, allowTaint: true, logging: false, scale: 1 });
-        mapImgData = canvas.toDataURL('image/jpeg', 0.88);
-      } catch (_) {}
+      // Two rAF cycles so the browser has painted the newly-loaded tiles
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      // Draw tile <img> elements onto a canvas using their real viewport positions.
+      // This works correctly with Leaflet's CSS-transform tile pane.
+      const mapImgData = await (async () => {
+        const container = map.getContainer();
+        const cw = container.offsetWidth, ch = container.offsetHeight;
+        const cv = document.createElement('canvas');
+        cv.width = cw; cv.height = ch;
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#0f2318';
+        ctx.fillRect(0, 0, cw, ch);
+        const base = container.getBoundingClientRect();
+        const imgs = Array.from(map.getPanes().tilePane.querySelectorAll('img.leaflet-tile'))
+          .filter(img => img.complete && img.naturalWidth > 0);
+        for (const img of imgs) {
+          const r = img.getBoundingClientRect();
+          try { ctx.drawImage(img, r.left - base.left, r.top - base.top, r.width, r.height); } catch (_) {}
+        }
+        // If canvas tainted by cross-origin tiles, retry drawing only blob: tiles
+        try { return cv.toDataURL('image/jpeg', 0.88); } catch (_) {
+          ctx.fillStyle = '#0f2318'; ctx.fillRect(0, 0, cw, ch);
+          for (const img of imgs.filter(i => i.src.startsWith('blob:'))) {
+            const r = img.getBoundingClientRect();
+            try { ctx.drawImage(img, r.left - base.left, r.top - base.top, r.width, r.height); } catch (_) {}
+          }
+          try { return cv.toDataURL('image/jpeg', 0.88); } catch (_) { return null; }
+        }
+      })();
 
       if (mapImgData) pdf.addImage(mapImgData, 'JPEG', margin, margin, mapImgW, mapImgH);
 
