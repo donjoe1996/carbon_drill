@@ -14,14 +14,16 @@ const LAYER_URLS = {
   faoAezWms:    'https://data.apps.fao.org/map/gsrv/gsrv1/wms',
   faoHazWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/CRTB/mapsets/HAZ-BI-2025&style=HAZ-I-2025&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_haz-bi-2025=FIRES',
   faoGlwWmts:   'https://data.apps.fao.org/map/wmts/wmts?layer=fao-gismgr/GLW4-2020/mapsets/D-DA-1KM&style=D-DA-ALL&tilematrixset=EPSG:3857&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/png&service=WMTS&version=1.0.0&request=GetTile&dim_a-species=CTL',
-  wdpa:         'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/tile/{z}/{y}/{x}',
+  wdpa:            'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/tile/{z}/{y}/{x}',
+  esriBiomeTiles:  'https://tiles.arcgis.com/tiles/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}',
+  esriBiomeQuery:  'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/FeatureServer/0/query',
 };
 
 // ─── LAYER FACTORIES ──────────────────────────────────────────────────────────
 
 function makeBiomeTileLayer() {
-  return L.tileLayer(LAYER_URLS.resolveEco, {
-    maxZoom: 13, opacity: 0.85, attribution: '© RESOLVE / UNEP-WCMC',
+  return L.tileLayer(LAYER_URLS.esriBiomeTiles, {
+    maxZoom: 13, opacity: 0.85, attribution: '© Esri / RESOLVE',
   });
 }
 
@@ -159,7 +161,7 @@ const MAP_LEGENDS = {
     </div>`,
   },
   biomes: {
-    meta: { name: 'RESOLVE Biomes 2017', type: 'ArcGIS MapServer', url: 'https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer' },
+    meta: { name: 'RESOLVE Biomes 2017', type: 'ArcGIS FeatureServer', url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/FeatureServer' },
     legend: `<div class="mleg-legend-wrap"><div class="mleg-grid">
       <div class="mleg-row"><span class="mleg-dot" style="background:#38A700"></span>Trop. Moist Broadleaf Forests</div>
       <div class="mleg-row"><span class="mleg-dot" style="background:#CCCD65"></span>Trop. Dry Broadleaf Forests</div>
@@ -422,20 +424,23 @@ function queryPixelInfo(latlng, type, map) {
 
   } else if (type === 'biome') {
     const geom = encodeURIComponent(JSON.stringify({ x: lng, y: lat }));
-    fetch(`https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/0/query?geometry=${geom}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=biome_num,biome_name&returnGeometry=false&f=json`)
+    fetch(`${LAYER_URLS.esriBiomeQuery}?geometry=${geom}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=BIOME_NUM,BIOME_NAME,ECO_NAME,REALM&returnGeometry=false&f=json`)
       .then(r => r.json())
       .then(d => {
         const f = d.features?.[0]?.attributes;
         if (!f) { popup.setContent('<div class="soil-pop-loading">No biome data here</div>'); return; }
         const BIOME_COLORS = { 1:'#38A700',2:'#CCCD65',3:'#88CE66',4:'#00734C',5:'#458970',6:'#7AB6F5',7:'#FEAA01',8:'#FEFF73',9:'#BEE7FF',10:'#D6C39D',11:'#9ED7C2',12:'#FE0000',13:'#CC6767',14:'#FE01C4' };
-        const color = BIOME_COLORS[f.biome_num] || '#888';
+        const num = f.BIOME_NUM;
+        const color = BIOME_COLORS[num] || '#888';
         popup.setContent(`
           <div class="soil-pop-head"><div class="soil-pop-label">RESOLVE Biome 2017</div>
             <div class="soil-pop-name" style="display:flex;align-items:center;gap:6px">
-              <span style="width:12px;height:12px;border-radius:2px;background:${color};flex-shrink:0;display:inline-block"></span>${f.biome_name}
+              <span style="width:12px;height:12px;border-radius:2px;background:${color};flex-shrink:0;display:inline-block"></span>${f.BIOME_NAME}
             </div></div>
           <div class="soil-pop-rows">
-            <div class="soil-pop-row"><span style="color:var(--text-mut)">Biome #</span><span style="margin-left:auto">${f.biome_num}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Ecoregion</span><span style="margin-left:auto;text-align:right;max-width:170px;line-height:1.3">${f.ECO_NAME}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Realm</span><span style="margin-left:auto">${f.REALM}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut)">Biome #</span><span style="margin-left:auto">${num}</span></div>
           </div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
