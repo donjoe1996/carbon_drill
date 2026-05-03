@@ -83,10 +83,10 @@ function createMapLayers(map) {
   L.control.layers(
     { '🛰 Satellite': sat, '🏔 Terrain Base': terrain },
     {
+      '🌱 RESOLVE Biomes': biome,
+      '🌍 RESOLVE Ecoregions': eco,
       '🌿 ESA Land Cover 2021': esa,
       '🪨 WRB Soil Groups': wrb,
-      '🌍 RESOLVE Ecoregions': eco,
-      '🌱 RESOLVE Biomes': biome,
       '🌾 FAO Agro-Eco Zones': fao,
       '🔥 FAO Climate Hazard 2025': haz,
       '🐄 FAO Livestock Density 2020': glw,
@@ -220,10 +220,10 @@ function setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLaye
   function render() {
     const el = document.getElementById(legendId);
     if (!el) return;
-    if (map.hasLayer(wrbLayer))                          el.innerHTML = renderLegend('wrb');
-    else if (map.hasLayer(esaLayer))                     el.innerHTML = renderLegend('esa');
+    if (biomeLayer && map.hasLayer(biomeLayer))          el.innerHTML = renderLegend('biomes');
     else if (map.hasLayer(ecoLayer))                     el.innerHTML = renderLegend('ecoregions');
-    else if (biomeLayer && map.hasLayer(biomeLayer))     el.innerHTML = renderLegend('biomes');
+    else if (map.hasLayer(esaLayer))                     el.innerHTML = renderLegend('esa');
+    else if (map.hasLayer(wrbLayer))                     el.innerHTML = renderLegend('wrb');
     else if (faoLayer && map.hasLayer(faoLayer))         el.innerHTML = renderLegend('fao_aez');
     else if (hazLayer && map.hasLayer(hazLayer))         el.innerHTML = renderLegend('fao_haz');
     else if (glwLayer && map.hasLayer(glwLayer))         el.innerHTML = renderLegend('glw4');
