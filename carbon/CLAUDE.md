@@ -7,6 +7,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 A static two-file web app — a daily professional writing drill for carbon markets practitioners. No build system, no npm, no framework.
 
 - `carbon-writing-drill.html` — all UI, CSS, and JS
+- `layers.js` — all map layer factories, WMS/WMTS/FeatureServer configs, pixel queries, legends, map controls, location search
 - `data.js` — all drill content (vocabulary pool, reading passages, VM47 scenarios, Isometric scenarios)
 
 Hosted on GitHub Pages: `https://donjoe1996.github.io/carbon_drill/carbon/carbon-writing-drill.html`
@@ -60,67 +61,76 @@ Below the accordion, a **tile cache bar** (`.tile-cache-bar`) shows hit/miss sta
 
 ### Map (Leaflet — all 4 drills)
 
-Map instances are lazily created and reused (`_drillMap`, `_readingMap`, `_vm47Map`, `_isoMap`). Each map is initialized once in the `start*Drill()` function. CDN dependencies: Leaflet 1.9.4, html2canvas 1.4.1, jsPDF 2.5.1 UMD.
+Map instances are lazily created and reused (`_drillMap`, `_readingMap`, `_vm47Map`, `_isoMap`). Each map is initialized once in the `start*Drill()` function. CDN dependencies: Leaflet 1.9.4, esri-leaflet@3, html2canvas 1.4.1, jsPDF 2.5.1 UMD.
+
+**`createMapLayers(map)`** (in `layers.js`): factory that creates all layers + `L.control.layers` for one map instance. Returns `{ sat, terrain, esa, wrb, eco, fao, haz, glw, biome, wdpa }`. Called once per map in the `start*Drill()` functions.
 
 **Layer control** (top-right, always expanded):
 - Base layers (radio): 🛰 Satellite (Google) | 🏔 Terrain Base (Esri World Terrain)
-- Overlay layers (mutually exclusive — `setupMapLegend` enforces one-at-a-time):
+- Overlay layers (mutually exclusive — `setupMapLegend` enforces one-at-a-time, in display order):
+  - 🌱 RESOLVE Biomes (ArcGIS FeatureServer, Esri/RESOLVE — client-side styled by BIOME_NUM, 14 colours)
+  - 🌍 RESOLVE Ecoregions (ArcGIS FeatureServer, same service — client-side styled by ECO_ID, 846 colours)
   - 🌿 ESA Land Cover 2021 (WMTS, Terrascope)
   - 🪨 WRB Soil Groups (WMS, ISRIC)
-  - 🌍 RESOLVE Ecoregions (XYZ tile, UNEP-WCMC)
-  - 🌱 RESOLVE Biomes (same XYZ tile as ecoregions — reuses `makeBiomeTileLayer()`)
   - 🌾 FAO Agro-Eco Zones (WMS, FAO GAEZ v4)
   - 🔥 FAO Climate Hazard 2025 (WMTS, FAO CRTB)
   - 🐄 FAO Livestock Density 2020 (WMTS, FAO GLW4)
+  - 🛡 Protected Areas (XYZ tile, UNEP-WCMC WDPA)
 
 **Map controls** (added via `addMapControls(map)`):
 - Scale bar — km only, bottom-left
 - Zoom level display (`Z 10`) — bottom-right, live update on zoom
 
-**Context menu** (`addMapContextMenu(map)`): right-click opens a pixel-query menu. Dispatches to `queryPixelInfo(latlng, type, map)` which supports:
+**Context menu** (`addMapContextMenu(map)`): right-click opens a pixel-query menu (ordered to match layer control). Dispatches to `queryPixelInfo(latlng, type, map)` which supports:
 
 | type | Source | Method |
 |---|---|---|
-| `soil` | ISRIC SoilGrids v2 | REST API |
+| `biome` | RESOLVE Ecoregions FeatureServer | ArcGIS query (returns biome_name) |
 | `eco` | RESOLVE Ecoregions FeatureServer | ArcGIS query |
 | `esa` | ESA WorldCover 2021 | Canvas tile read (no GetFeatureInfo) |
+| `soil` | ISRIC SoilGrids v2 | REST API |
 | `aez` | FAO GAEZ v4 | WMS GetFeatureInfo |
 | `haz` | FAO CRTB HAZ-BI 2025 | WMTS GetFeatureInfo |
 | `glw` | FAO GLW4 2020 | WMTS GetFeatureInfo |
-| `biome` | RESOLVE Ecoregions FeatureServer | ArcGIS query (returns biome_name) |
+| `wdpa` | UNEP-WCMC WDPA MapServer | ArcGIS query (returns name, desig_eng, iucn_cat, status, rep_area, iso3) |
 
 **Tile cache** (IIFE, runs before map init): monkey-patches `L.TileLayer.prototype.createTile`. Two-layer cache: memory (Map of `url → objectURL`) + Cache API (persists across reloads). Tiles are fetched with `mode: 'cors'`; CORS failures fall back to direct `img.src` (Google tiles). `window.clearTileCache()` clears both layers.
 
-**Dynamic legend** (`setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer, glwLayer, biomeLayer)`):
-- 11 parameters. Listens to `layeradd` / `layerremove` events.
+**Dynamic legend** (`setupMapLegend(map, legendId, terrainLayer, esaLayer, wrbLayer, ecoLayer, panelId, faoLayer, hazLayer, glwLayer, biomeLayer, wdpaLayer)`):
+- 12 parameters. Listens to `layeradd` / `layerremove` events.
 - Renders legend content into the `map-legend-area` div inside panel 4.
 - When a layer is switched (not on initial load), panel 4 auto-opens.
 - Overlay mutual exclusion: adding any overlay removes all others.
-- Legend priority order: wrb → esa → ecoregions → biomes → fao_aez → fao_haz → glw4 → terrain → satellite
+- Legend priority order: wrb → esa → ecoregions → biomes → fao_aez → fao_haz → glw4 → wdpa → terrain → satellite
 
-**`_printLayers`**: after each map is initialized, `map._printLayers = { esa, wrb }` is set so `printMapToPdf` can access the two printable overlay references.
+**`_printLayers`**: after each map is initialized, `map._printLayers = { esa, wrb, biome }` is set so `printMapToPdf` can access printable overlay references.
 
-**Location search** (`setupLocSearch(inputId, clearId, resultsId, mapGetter)`): debounced Nominatim fetch, renders dropdown, flies map on selection.
+**Location search** (`setupLocSearch(inputId, clearId, resultsId, mapGetter)`): defined in `layers.js`. Debounced Nominatim fetch, renders dropdown, flies map on selection.
 
-**GeoJSON upload** (`setupGeoJsonUpload(inputId, statusId, clearId, mapGetter)`): FileReader → `L.geoJSON` with green style → `fitBounds`. Replaces previous layer on re-upload; clear button removes it.
+**GeoJSON upload** (`setupGeoJsonUpload(inputId, statusId, clearId, mapGetter)`): defined in HTML. FileReader → `L.geoJSON` with green style → `fitBounds`. Replaces previous layer on re-upload; clear button removes it.
 
-**Print to PDF** (`printMapToPdf(mapGetter, btnEl)`): async, disables button during run. For each of [ESA, WRB]: switches layer, waits 1.8 s for tiles, captures map with `html2canvas`, assembles A4 landscape page in jsPDF — map image left (~205 mm), legend panel right (~72 mm). ESA legend drawn with colored `roundedRect` + text; WRB legend fetched as PNG from GetLegendGraphic and embedded. Saves `carbon-map-print.pdf`. Restores original layer state in `finally`.
+**Print to PDF** (`printMapToPdf(mapGetter, btnEl)`): async, disables button during run. Produces 4 A4 landscape pages: Satellite → Biome → ESA Land Cover → WRB Soil. Map image left (~205 mm), legend right (~72 mm). Satellite page uses Esri MapServer export API. Tile-layer pages composite tile `<img>` elements + SVG overlay pane (so `L.esri.featureLayer` polygons are captured). Restores original layer state in `finally`.
 
-**Legend content** (`MAP_LEGENDS` + `renderLegend(key)`): each entry has `meta` (name, type, service URL) and `legend` HTML.
+**Legend content** (`MAP_LEGENDS` + `renderLegend(key)`): each entry has `meta` (name, type, service URL) and `legend` HTML. Defined in `layers.js`.
 
 | Key | Dataset name | Type | Service URL |
 |---|---|---|---|
 | satellite | Google Maps Satellite | XYZ Tile | `https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}` |
 | terrain | Esri World Terrain Base | XYZ Tile | `https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}` |
+| biomes | RESOLVE Biomes 2017 | ArcGIS FeatureServer | `https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/Resolve_Ecoregions/FeatureServer/0` |
+| ecoregions | RESOLVE Ecoregions 2017 | ArcGIS FeatureServer | same FeatureServer as biomes |
 | esa | ESA WorldCover 2021 v200 | WMTS | `https://services.terrascope.be/wmts/v2` |
 | wrb | ISRIC — WRB Most Probable Soil Group | WMS | `https://maps.isric.org/mapserv?map=/map/wrb.map` |
-| ecoregions | RESOLVE Ecoregions 2017 | XYZ Tile | `https://data-gis.unep-wcmc.org/server/rest/services/Bio-geographicalRegions/Resolve_Ecoregions/MapServer/tile/{z}/{y}/{x}` |
-| biomes | RESOLVE Biomes 2017 | ArcGIS MapServer | same tile URL as ecoregions |
 | fao_aez | FAO Agro-Ecological Zones (AEZ) | WMS | `https://data.apps.fao.org/map/gsrv/gsrv1/wms` |
 | fao_haz | FAO Climate Risk — Hazard-Biophysical Index 2025 | WMTS | `https://data.apps.fao.org/map/wmts/wmts` |
 | glw4 | FAO Global Livestock Density 2020 — Cattle (1 km) | WMTS | `https://data.apps.fao.org/map/wmts/wmts` |
+| wdpa | UNEP-WCMC Protected Planet | XYZ Tile | `https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/tile/{z}/{y}/{x}` |
 
 WRB legend image: `GetLegendGraphic` requires `VERSION=1.1.1` — without it the server returns HTML instead of PNG.
+
+Biome layer: `makeBiomeTileLayer()` returns `L.esri.featureLayer` styled by `BIOME_NUM` (14 fixed colours). Requires `esri-leaflet@3` CDN script.
+
+Ecoregion layer: `makeEcoFeatureLayer()` returns `L.esri.featureLayer` styled by `ECO_ID` using golden-angle hue distribution (846 deterministic colours). Same FeatureServer as biomes.
 
 ### Output flow
 All drills call `showOutput(output, drillType)` which renders JSON into `#json-output`. User copies/pastes the JSON into claude.ai. No API calls are made from the browser (except the pixel query endpoints and the Nominatim geocoder).

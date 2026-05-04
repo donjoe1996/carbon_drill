@@ -479,7 +479,7 @@
         </div>
         <div class="map-print-bar">
           <button class="map-print-btn" id="drill-print-btn" onclick="printMapToPdf(() => _drillMap, this)">🖨 Print PDF</button>
-          <span class="map-print-hint">A4 · Satellite · ESA · WRB</span>
+          <span class="map-print-hint">A4 · Satellite · Biome · ESA · WRB</span>
         </div>
 
         <div class="panel open" id="vocab-drill-panel-vocab">
@@ -590,7 +590,7 @@
         </div>
         <div class="map-print-bar">
           <button class="map-print-btn" id="read-print-btn" onclick="printMapToPdf(() => _readingMap, this)">🖨 Print PDF</button>
-          <span class="map-print-hint">A4 · Satellite · ESA · WRB</span>
+          <span class="map-print-hint">A4 · Satellite · Biome · ESA · WRB</span>
         </div>
 
         <div class="panel open" id="read-drill-panel-passage">
@@ -703,7 +703,7 @@
         </div>
         <div class="map-print-bar">
           <button class="map-print-btn" id="vm47-print-btn" onclick="printMapToPdf(() => _vm47Map, this)">🖨 Print PDF</button>
-          <span class="map-print-hint">A4 · Satellite · ESA · WRB</span>
+          <span class="map-print-hint">A4 · Satellite · Biome · ESA · WRB</span>
         </div>
 
         <div class="panel open" id="vm47-panel-scenario">
@@ -821,7 +821,7 @@
         </div>
         <div class="map-print-bar">
           <button class="map-print-btn" id="iso-print-btn" onclick="printMapToPdf(() => _isoMap, this)">🖨 Print PDF</button>
-          <span class="map-print-hint">A4 · Satellite · ESA · WRB</span>
+          <span class="map-print-hint">A4 · Satellite · Biome · ESA · WRB</span>
         </div>
 
         <div class="panel open" id="iso-panel-scenario">
@@ -1179,7 +1179,7 @@ function startVocabDrill() {
       setupMapLegend(_drillMap, "drill-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "vocab-drill-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_drillMap);
       addMapContextMenu(_drillMap);
-      _drillMap._printLayers = { esa: ll.esa, wrb: ll.wrb };
+      _drillMap._printLayers = { esa: ll.esa, wrb: ll.wrb, biome: ll.biome };
       _drillMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_drillMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1268,7 +1268,7 @@ function startReadingDrill() {
       setupMapLegend(_readingMap, "reading-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "read-drill-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_readingMap);
       addMapContextMenu(_readingMap);
-      _readingMap._printLayers = { esa: ll.esa, wrb: ll.wrb };
+      _readingMap._printLayers = { esa: ll.esa, wrb: ll.wrb, biome: ll.biome };
       _readingMapMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_readingMap).bindTooltip(title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1342,7 +1342,7 @@ function startVM47Drill() {
       setupMapLegend(_vm47Map, "vm47-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "vm47-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_vm47Map);
       addMapContextMenu(_vm47Map);
-      _vm47Map._printLayers = { esa: ll.esa, wrb: ll.wrb };
+      _vm47Map._printLayers = { esa: ll.esa, wrb: ll.wrb, biome: ll.biome };
       _vm47Marker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_vm47Map).bindTooltip(_vm47Session.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1434,7 +1434,7 @@ function startIsoDrill() {
       setupMapLegend(_isoMap, "iso-map-legend", ll.terrain, ll.esa, ll.wrb, ll.eco, "iso-panel-legend", ll.fao, ll.haz, ll.glw, ll.biome, ll.wdpa);
       addMapControls(_isoMap);
       addMapContextMenu(_isoMap);
-      _isoMap._printLayers = { esa: ll.esa, wrb: ll.wrb };
+      _isoMap._printLayers = { esa: ll.esa, wrb: ll.wrb, biome: ll.biome };
       _isoMarker = L.circleMarker([lat, lng], {
         radius: 9, color: "#e8ede9", weight: 2, fillColor: "#40916c", fillOpacity: 0.9,
       }).addTo(_isoMap).bindTooltip(_isoSession.title, { className: "vm47-tip", direction: "top", permanent: false });
@@ -1611,6 +1611,23 @@ async function printMapToPdf(mapGetter, btnEl) {
   const mapImgW = pageW - legendW - margin * 3;
   const mapImgH = pageH - margin * 2;
 
+  const BIOME_ITEMS = [
+    { hex: '#38A700', label: 'Trop. Moist Broadleaf Forest' },
+    { hex: '#CCCD65', label: 'Trop. Dry Broadleaf Forest' },
+    { hex: '#88CE66', label: 'Trop. Coniferous Forest' },
+    { hex: '#00734C', label: 'Temp. Broadleaf Forest' },
+    { hex: '#458970', label: 'Temp. Conifer Forest' },
+    { hex: '#7AB6F5', label: 'Boreal Forest / Taiga' },
+    { hex: '#FEAA01', label: 'Trop. Grasslands & Savanna' },
+    { hex: '#FEFF73', label: 'Temp. Grasslands & Savanna' },
+    { hex: '#BEE7FF', label: 'Flooded Grasslands' },
+    { hex: '#D6C39D', label: 'Montane Grasslands' },
+    { hex: '#9ED7C2', label: 'Tundra' },
+    { hex: '#FE0000', label: 'Mediterranean Scrub' },
+    { hex: '#CC6767', label: 'Deserts & Xeric Shrublands' },
+    { hex: '#FE01C4', label: 'Mangroves' },
+  ];
+
   const ESA_ITEMS = [
     { hex: '#006400', label: 'Tree cover' },
     { hex: '#ffbb22', label: 'Shrubland' },
@@ -1628,12 +1645,42 @@ async function printMapToPdf(mapGetter, btnEl) {
   const printLayers = [
     { captureSat: true, title: 'Satellite Hybrid', subtitle: 'Esri World Imagery + Place Labels',
       legendNote: 'True-colour satellite imagery with place names, roads and boundaries\n© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS' },
+    { layer: pl.biome, title: 'RESOLVE Biomes 2017', subtitle: 'ArcGIS FeatureServer · Esri / RESOLVE', items: BIOME_ITEMS },
     { layer: pl.esa, title: 'ESA WorldCover 2021', subtitle: 'WMTS · services.terrascope.be', items: ESA_ITEMS },
     { layer: pl.wrb, title: 'WRB Soil Groups', subtitle: 'WMS · ISRIC SoilGrids',
       legendImgUrl: 'https://maps.isric.org/mapserv?map=/map/wrb.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYER=MostProbable&FORMAT=image/png' },
   ];
 
-  const savedActive = [pl.esa, pl.wrb].find(l => map.hasLayer(l)) || null;
+  const allOverlays = [pl.esa, pl.wrb, pl.biome].filter(Boolean);
+  const savedActive = allOverlays.find(l => map.hasLayer(l)) || null;
+
+  // Draws the SVG overlay pane (featureLayer polygons) onto ctx at correct position.
+  const drawSvgOverlay = async (ctx, container, cw, ch) => {
+    const svgEl = map.getPanes().overlayPane.querySelector('svg');
+    if (!svgEl) return;
+    const svgRect = svgEl.getBoundingClientRect();
+    const baseRect = container.getBoundingClientRect();
+    const svgW = svgEl.width.baseVal.value || cw;
+    const svgH = svgEl.height.baseVal.value || ch;
+    const svgClone = svgEl.cloneNode(true);
+    svgClone.style.transform = '';
+    svgClone.setAttribute('width', svgW);
+    svgClone.setAttribute('height', svgH);
+    const blob = new Blob([new XMLSerializer().serializeToString(svgClone)], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const dx = svgRect.left - baseRect.left;
+        const dy = svgRect.top - baseRect.top;
+        try { ctx.drawImage(img, dx, dy, svgW, svgH); } catch (_) {}
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      img.src = url;
+    });
+  };
 
   try {
     for (let i = 0; i < printLayers.length; i++) {
@@ -1645,7 +1692,7 @@ async function printMapToPdf(mapGetter, btnEl) {
       let mapImgData = null;
 
       if (captureSat) {
-        // Use Esri MapServer export API — single CORS-safe image, no tile compositor needed.
+        // Esri MapServer export API — single CORS-safe image, no tile compositor needed.
         const bounds = map.getBounds();
         const container = map.getContainer();
         const cw = container.offsetWidth, ch = container.offsetHeight;
@@ -1671,14 +1718,11 @@ async function printMapToPdf(mapGetter, btnEl) {
         if (labImg) ctx.drawImage(labImg, 0, 0, cw, ch);
         try { mapImgData = cv.toDataURL('image/jpeg', 0.88); } catch (_) {}
       } else {
-        [pl.esa, pl.wrb].forEach(l => { if (l && map.hasLayer(l)) map.removeLayer(l); });
+        allOverlays.forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
         map.addLayer(layer);
         await new Promise(r => setTimeout(r, 4000));
-
-        // Two rAF cycles so the browser has painted the newly-loaded tiles
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        // Draw tile <img> elements onto a canvas using their real viewport positions.
         mapImgData = await (async () => {
           const container = map.getContainer();
           const cw = container.offsetWidth, ch = container.offsetHeight;
@@ -1694,13 +1738,15 @@ async function printMapToPdf(mapGetter, btnEl) {
             const r = img.getBoundingClientRect();
             try { ctx.drawImage(img, r.left - base.left, r.top - base.top, r.width, r.height); } catch (_) {}
           }
-          // If canvas tainted by cross-origin tiles, retry drawing only blob: tiles
+          await drawSvgOverlay(ctx, container, cw, ch);
           try { return cv.toDataURL('image/jpeg', 0.88); } catch (_) {
+            // Canvas tainted — retry with blob-only tiles
             ctx.fillStyle = '#0f2318'; ctx.fillRect(0, 0, cw, ch);
             for (const img of imgs.filter(i => i.src.startsWith('blob:'))) {
               const r = img.getBoundingClientRect();
               try { ctx.drawImage(img, r.left - base.left, r.top - base.top, r.width, r.height); } catch (_) {}
             }
+            await drawSvgOverlay(ctx, container, cw, ch);
             try { return cv.toDataURL('image/jpeg', 0.88); } catch (_) { return null; }
           }
         })();
@@ -1768,7 +1814,7 @@ async function printMapToPdf(mapGetter, btnEl) {
 
     pdf.save('carbon-map-print.pdf');
   } finally {
-    [pl.esa, pl.wrb].forEach(l => { if (l && map.hasLayer(l)) map.removeLayer(l); });
+    allOverlays.forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
     if (savedActive) map.addLayer(savedActive);
     btnEl.disabled = false;
     btnEl.textContent = origText;

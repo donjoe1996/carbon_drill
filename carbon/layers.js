@@ -20,6 +20,22 @@ const LAYER_URLS = {
 
 // ─── LAYER FACTORIES ──────────────────────────────────────────────────────────
 
+function makeEcoFeatureLayer() {
+  return L.esri.featureLayer({
+    url: LAYER_URLS.esriBiomeQuery.replace('/query', ''),
+    style: feature => {
+      const id = (feature.properties.ECO_ID || 0);
+      const hue = Math.round((id * 137.508) % 360);
+      const sat = 50 + (id % 25);
+      const lit = 38 + (id % 22);
+      return { fillColor: `hsl(${hue},${sat}%,${lit}%)`, fillOpacity: 0.78, weight: 0.6, color: '#00000022' };
+    },
+    simplifyFactor: 0.5,
+    precision: 5,
+    attribution: '© Esri / RESOLVE',
+  });
+}
+
 function makeBiomeTileLayer() {
   const BIOME_COLORS = {
     1: '#38A700', 2: '#CCCD65', 3: '#88CE66', 4: '#00734C',
@@ -57,9 +73,7 @@ function createMapLayers(map) {
     opacity: 0.7, attribution: '© ISRIC — World Soil Information',
   });
 
-  const eco = L.tileLayer(LAYER_URLS.resolveEco, {
-    maxZoom: 13, opacity: 0.85, attribution: '© RESOLVE / UNEP-WCMC',
-  });
+  const eco = makeEcoFeatureLayer();
 
   const fao = L.tileLayer.wms(LAYER_URLS.faoAezWms, {
     layers: 'boundaries:aez', format: 'image/png', transparent: true,
@@ -133,23 +147,17 @@ const MAP_LEGENDS = {
     </div>`,
   },
   ecoregions: {
-    meta: { name: 'RESOLVE Ecoregions 2017', type: 'XYZ Tile', url: LAYER_URLS.resolveEco },
-    legend: `<div class="mleg-legend-wrap"><div class="mleg-grid">
-      <div class="mleg-row"><span class="mleg-dot" style="background:#5d8233"></span>Trop. Moist Broadleaf Forest</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#cc6600"></span>Trop. Dry Broadleaf Forest</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#a8c63e"></span>Trop. Coniferous Forest</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#85aa4c"></span>Temp. Broadleaf Forest</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#386a1f"></span>Temp. Conifer Forest</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#007777"></span>Boreal Forest / Taiga</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#d4bc6a"></span>Trop. Grasslands &amp; Savanna</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#c8be55"></span>Temp. Grasslands &amp; Savanna</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#6bb3c5"></span>Flooded Grasslands</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#bdb3c4"></span>Montane Grasslands</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#b5d6f5"></span>Tundra</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#e8d36f"></span>Mediterranean Scrub</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#e5d3a3"></span>Deserts &amp; Xeric Shrublands</div>
-      <div class="mleg-row"><span class="mleg-dot" style="background:#3b7b5e"></span>Mangroves</div>
-    </div><span class="mleg-note" style="display:block;margin-top:6px">© RESOLVE / UNEP-WCMC — 846 ecoregions, 14 biomes</span></div>`,
+    meta: { name: 'RESOLVE Ecoregions 2017', type: 'ArcGIS FeatureServer', url: LAYER_URLS.esriBiomeQuery.replace('/query', '') },
+    legend: `<div class="mleg-legend-wrap">
+      <div style="display:flex;gap:3px;margin-bottom:6px;flex-wrap:wrap">
+        ${Array.from({length: 24}, (_, i) => {
+          const hue = Math.round((i * 15 * 137.508) % 360);
+          return `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:hsl(${hue},62%,48%)"></span>`;
+        }).join('')}
+      </div>
+      <span class="mleg-note">Each of the 846 ecoregions is uniquely colored. Right-click any location to identify the ecoregion, biome, and realm.</span>
+      <span class="mleg-note" style="display:block;margin-top:4px">© Esri / RESOLVE — Ecoregions 2017</span>
+    </div>`,
   },
   fao_aez: {
     meta: { name: 'FAO Agro-Ecological Zones (AEZ)', type: 'WMS', url: LAYER_URLS.faoAezWms },
@@ -459,21 +467,21 @@ function queryPixelInfo(latlng, type, map) {
 
   } else if (type === 'wdpa') {
     const geom = encodeURIComponent(JSON.stringify({ x: lng, y: lat }));
-    fetch(`https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/1/query?geometry=${geom}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=NAME,DESIG_ENG,IUCN_CAT,STATUS,REP_AREA,ISO3&returnGeometry=false&f=json`)
+    fetch(`https://data-gis.unep-wcmc.org/server/rest/services/ProtectedPlanet/WDPCA/MapServer/1/query?geometry=${geom}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=name,desig_eng,iucn_cat,status,rep_area,iso3&returnGeometry=false&f=json`)
       .then(r => r.json())
       .then(d => {
         const f = d.features?.[0]?.attributes;
         if (!f) { popup.setContent('<div class="soil-pop-loading">No protected area at this location</div>'); return; }
-        const area = f.REP_AREA ? Math.round(f.REP_AREA).toLocaleString() + ' km²' : '—';
-        const iucn = f.IUCN_CAT && f.IUCN_CAT !== 'Not Applicable' ? f.IUCN_CAT : '—';
+        const area = f.rep_area ? Math.round(f.rep_area).toLocaleString() + ' km²' : '—';
+        const iucn = f.iucn_cat && f.iucn_cat !== 'Not Applicable' ? f.iucn_cat : '—';
         popup.setContent(`
-          <div class="soil-pop-head"><div class="soil-pop-label">WDPA — Protected Area</div><div class="soil-pop-name">${f.NAME}</div></div>
+          <div class="soil-pop-head"><div class="soil-pop-label">WDPA — Protected Area</div><div class="soil-pop-name">${f.name || '—'}</div></div>
           <div class="soil-pop-rows">
-            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Designation</span><span style="margin-left:auto;text-align:right;max-width:170px;line-height:1.3">${f.DESIG_ENG || '—'}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Designation</span><span style="margin-left:auto;text-align:right;max-width:170px;line-height:1.3">${f.desig_eng || '—'}</span></div>
             <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">IUCN Cat.</span><span style="margin-left:auto">${iucn}</span></div>
-            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Status</span><span style="margin-left:auto">${f.STATUS || '—'}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Status</span><span style="margin-left:auto">${f.status || '—'}</span></div>
             <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Area</span><span style="margin-left:auto">${area}</span></div>
-            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Country</span><span style="margin-left:auto">${f.ISO3 || '—'}</span></div>
+            <div class="soil-pop-row"><span style="color:var(--text-mut);min-width:60px">Country</span><span style="margin-left:auto">${f.iso3 || '—'}</span></div>
           </div>${coord}`);
       })
       .catch(() => popup.setContent('<div class="soil-pop-loading">No data at this location</div>'));
@@ -487,13 +495,13 @@ function addMapContextMenu(map) {
   const menu = L.DomUtil.create('div', 'map-ctx-menu', container);
   menu.innerHTML = `
     <div class="map-ctx-header">Query pixel info</div>
-    <div class="map-ctx-item" data-query="soil"><span class="ctx-icon">🪨</span>WRB Soil Group<span class="map-ctx-sub">SoilGrids</span></div>
+    <div class="map-ctx-item" data-query="biome"><span class="ctx-icon">🌱</span>Biome<span class="map-ctx-sub">RESOLVE 2017</span></div>
     <div class="map-ctx-item" data-query="eco"><span class="ctx-icon">🌍</span>Ecoregion<span class="map-ctx-sub">RESOLVE</span></div>
     <div class="map-ctx-item" data-query="esa"><span class="ctx-icon">🌿</span>ESA Land Cover<span class="map-ctx-sub">WorldCover 2021</span></div>
+    <div class="map-ctx-item" data-query="soil"><span class="ctx-icon">🪨</span>WRB Soil Group<span class="map-ctx-sub">SoilGrids</span></div>
     <div class="map-ctx-item" data-query="aez"><span class="ctx-icon">🌾</span>Agro-Eco Zone<span class="map-ctx-sub">FAO GAEZ v4</span></div>
     <div class="map-ctx-item" data-query="haz"><span class="ctx-icon">🔥</span>Climate Hazard<span class="map-ctx-sub">FAO CRTB 2025</span></div>
     <div class="map-ctx-item" data-query="glw"><span class="ctx-icon">🐄</span>Livestock Density<span class="map-ctx-sub">FAO GLW4 2020</span></div>
-    <div class="map-ctx-item" data-query="biome"><span class="ctx-icon">🌱</span>Biome<span class="map-ctx-sub">RESOLVE 2017</span></div>
     <div class="map-ctx-item" data-query="wdpa"><span class="ctx-icon">🛡</span>Protected Area<span class="map-ctx-sub">WDPA / Protected Planet</span></div>`;
 
   L.DomEvent.disableClickPropagation(menu);
@@ -521,4 +529,88 @@ function addMapContextMenu(map) {
 
   map.on('click', hide);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+}
+
+// ─── LOCATION SEARCH ──────────────────────────────────────────────────────────
+
+function setupLocSearch(inputId, clearId, resultsId, mapGetter) {
+  const input = document.getElementById(inputId);
+  const clearBtn = document.getElementById(clearId);
+  const results = document.getElementById(resultsId);
+  if (!input) return;
+
+  let debounce = null;
+
+  function hide() { results.classList.add('hidden'); results.innerHTML = ''; }
+  function show() { results.classList.remove('hidden'); }
+
+  function flyTo(lat, lon, zoom) {
+    const map = mapGetter();
+    if (!map) return;
+    map.flyTo([parseFloat(lat), parseFloat(lon)], zoom || 10, { duration: 1.2 });
+    hide();
+    input.blur();
+  }
+
+  function renderResults(items) {
+    results.innerHTML = '';
+    if (!items.length) {
+      results.innerHTML = '<div class="loc-search-status">No results found</div>';
+      show(); return;
+    }
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'loc-result-item';
+      const parts = item.display_name.split(', ');
+      const name = parts.slice(0, 2).join(', ');
+      const sub = parts.slice(2).join(', ');
+      el.innerHTML = `<span class="loc-result-name">${name}</span>${sub ? `<span class="loc-result-sub">${sub}</span>` : ''}`;
+      el.addEventListener('click', () => {
+        input.value = name;
+        clearBtn.classList.add('visible');
+        flyTo(item.lat, item.lon, item.type === 'country' ? 5 : item.type === 'city' ? 11 : 9);
+      });
+      results.appendChild(el);
+    });
+    show();
+  }
+
+  function search(q) {
+    if (q.length < 2) { hide(); return; }
+    results.innerHTML = '<div class="loc-search-status">Searching…</div>';
+    show();
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=0`, {
+      headers: { 'Accept-Language': 'en', 'User-Agent': 'CarbonDrill/1.0' }
+    })
+      .then(r => r.json())
+      .then(renderResults)
+      .catch(() => { results.innerHTML = '<div class="loc-search-status">Search unavailable</div>'; show(); });
+  }
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearBtn.classList.toggle('visible', q.length > 0);
+    clearTimeout(debounce);
+    debounce = setTimeout(() => search(q), 380);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      clearTimeout(debounce);
+      const first = results.querySelector('.loc-result-item');
+      if (first) { first.click(); return; }
+      search(input.value.trim());
+    }
+    if (e.key === 'Escape') { hide(); input.blur(); }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = ''; hide();
+    clearBtn.classList.remove('visible');
+    input.focus();
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.closest('.loc-search-wrap').contains(e.target)) hide();
+  });
 }
